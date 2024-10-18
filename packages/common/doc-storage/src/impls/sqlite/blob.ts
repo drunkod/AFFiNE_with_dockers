@@ -16,6 +16,14 @@ export class SqliteBlobStorage extends BlobStorage<SqliteBlobStorageOptions> {
     return this.options.db;
   }
 
+  override async connect(): Promise<void> {
+    await this.db.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    await this.db.close();
+  }
+
   override getBlob(key: string): Promise<Blob | null> {
     return this.db.getBlob(key);
   }

@@ -1,13 +1,15 @@
 import { type Blob, BlobStorage, type ListedBlob } from '../../storage';
-import { type SpaceIDB, SpaceIndexedDbManager } from './db';
+import { IDBProtocol, type SpaceIDB } from './db';
 
 export class IndexedDBBlobStorage extends BlobStorage {
   private db!: SpaceIDB;
 
   override async connect(): Promise<void> {
-    this.db = await SpaceIndexedDbManager.open(
-      `${this.spaceType}:${this.spaceId}`
-    );
+    this.db = await IDBProtocol.open(`${this.spaceType}:${this.spaceId}`);
+  }
+
+  override async disconnect() {
+    this.db.close();
   }
 
   override async getBlob(key: string): Promise<Blob | null> {
