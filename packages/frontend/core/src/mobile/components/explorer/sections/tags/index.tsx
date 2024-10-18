@@ -8,10 +8,10 @@ import { useLiveData, useServices } from '@toeverything/infra';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileCollapsibleSection } from '../../layouts/collapsible-section';
-import { MobileExplorerTagNode } from '../../nodes/tag';
+import { CollapsibleSection } from '../../layouts/collapsible-section';
+import { ExplorerTagNode } from '../../nodes/tag';
 
-export const MobileExplorerTags = () => {
+export const ExplorerTags = () => {
   const { tagService, explorerService } = useServices({
     TagService,
     ExplorerService,
@@ -38,13 +38,13 @@ export const MobileExplorerTags = () => {
   }, [collapsed]);
 
   return (
-    <MobileCollapsibleSection
+    <CollapsibleSection
       name="tags"
       title={t['com.affine.rootAppSidebar.tags']()}
     >
       <ExplorerTreeRoot>
         {tags.map(tag => (
-          <MobileExplorerTagNode
+          <ExplorerTagNode
             key={tag.id}
             tagId={tag.id}
             defaultRenaming={createdTag?.id === tag.id}
@@ -58,6 +58,6 @@ export const MobileExplorerTags = () => {
           ]()}
         />
       </ExplorerTreeRoot>
-    </MobileCollapsibleSection>
+    </CollapsibleSection>
   );
 };

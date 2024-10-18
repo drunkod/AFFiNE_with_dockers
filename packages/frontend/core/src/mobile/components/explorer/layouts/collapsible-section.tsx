@@ -21,7 +21,7 @@ import {
   triggerRoot,
 } from './collapsible-section.css';
 
-interface MobileCollapsibleSectionProps extends HTMLAttributes<HTMLDivElement> {
+interface CollapsibleSectionProps extends HTMLAttributes<HTMLDivElement> {
   name: CollapsibleSectionName;
   title: string;
   actions?: ReactNode;
@@ -31,7 +31,7 @@ interface MobileCollapsibleSectionProps extends HTMLAttributes<HTMLDivElement> {
   contentClassName?: string;
 }
 
-interface MobileCollapsibleSectionTriggerProps
+interface CollapsibleSectionTriggerProps
   extends HTMLAttributes<HTMLDivElement> {
   label: string;
   collapsed?: boolean;
@@ -39,10 +39,10 @@ interface MobileCollapsibleSectionTriggerProps
   setCollapsed?: (collapsed: boolean) => void;
 }
 
-const MobileCollapsibleSectionTrigger = forwardRef<
+const CollapsibleSectionTrigger = forwardRef<
   HTMLDivElement,
-  MobileCollapsibleSectionTriggerProps
->(function MobileCollapsibleSectionTrigger(
+  CollapsibleSectionTriggerProps
+>(function CollapsibleSectionTrigger(
   { actions, label, collapsed, setCollapsed, className, ...attrs },
   ref
 ) {
@@ -75,7 +75,7 @@ const MobileCollapsibleSectionTrigger = forwardRef<
   );
 });
 
-export const MobileCollapsibleSection = ({
+export const CollapsibleSection = ({
   name,
   title,
   actions,
@@ -85,7 +85,7 @@ export const MobileCollapsibleSection = ({
   contentClassName,
   children,
   ...attrs
-}: MobileCollapsibleSectionProps) => {
+}: CollapsibleSectionProps) => {
   const section = useService(ExplorerService).sections[name];
   const collapsed = useLiveData(section.collapsed$);
 
@@ -101,7 +101,7 @@ export const MobileCollapsibleSection = ({
       data-testid={testId}
       {...attrs}
     >
-      <MobileCollapsibleSectionTrigger
+      <CollapsibleSectionTrigger
         label={title}
         actions={actions}
         collapsed={collapsed}

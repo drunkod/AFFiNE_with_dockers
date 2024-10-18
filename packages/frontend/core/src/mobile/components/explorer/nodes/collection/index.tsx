@@ -5,7 +5,7 @@ import {
 } from '@affine/core/components/page-list';
 import { CollectionService } from '@affine/core/modules/collection';
 import type { NodeOperation } from '@affine/core/modules/explorer';
-import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/properties';
+import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
 import { ShareDocsListService } from '@affine/core/modules/share-doc';
 import type { Collection } from '@affine/env/filter';
 import { PublicPageMode } from '@affine/graphql';
@@ -23,8 +23,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileExplorerTreeNode } from '../../tree/node';
-import { MobileExplorerDocNode } from '../doc';
+import { ExplorerTreeNode } from '../../tree/node';
+import { ExplorerDocNode } from '../doc';
 import {
   useExplorerCollectionNodeOperations,
   useExplorerCollectionNodeOperationsMenu,
@@ -32,7 +32,7 @@ import {
 
 const CollectionIcon = () => <ViewLayersIcon />;
 
-export const MobileExplorerCollectionNode = ({
+export const ExplorerCollectionNode = ({
   collectionId,
   operations: additionalOperations,
 }: {
@@ -112,7 +112,7 @@ export const MobileExplorerCollectionNode = ({
   }
 
   return (
-    <MobileExplorerTreeNode
+    <ExplorerTreeNode
       icon={CollectionIcon}
       name={collection.name || t['Untitled']()}
       renameable
@@ -128,7 +128,7 @@ export const MobileExplorerCollectionNode = ({
         collection={collection}
         onAddDoc={handleAddDocToCollection}
       />
-    </MobileExplorerTreeNode>
+    </ExplorerTreeNode>
   );
 };
 
@@ -205,7 +205,7 @@ const ExplorerCollectionNodeChildren = ({
   return (
     <>
       {filtered.map(doc => (
-        <MobileExplorerDocNode
+        <ExplorerDocNode
           key={doc.id}
           docId={doc.id}
           operations={

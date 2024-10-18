@@ -16,11 +16,11 @@ import type {
   ExplorerTreeNodeIcon,
   NodeOperation,
 } from '@affine/core/modules/explorer';
+import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
 import {
   type FolderNode,
   OrganizeService,
 } from '@affine/core/modules/organize';
-import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/properties';
 import { useI18n } from '@affine/i18n';
 import track from '@affine/track';
 import {
@@ -43,13 +43,13 @@ import { difference } from 'lodash-es';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileExplorerTreeNode } from '../../tree/node';
-import { MobileExplorerCollectionNode } from '../collection';
-import { MobileExplorerDocNode } from '../doc';
-import { MobileExplorerTagNode } from '../tag';
+import { ExplorerTreeNode } from '../../tree/node';
+import { ExplorerCollectionNode } from '../collection';
+import { ExplorerDocNode } from '../doc';
+import { ExplorerTagNode } from '../tag';
 import { FavoriteFolderOperation } from './operations';
 
-export const MobileExplorerFolderNode = ({
+export const ExplorerFolderNode = ({
   nodeId,
   defaultRenaming,
   operations,
@@ -92,20 +92,16 @@ export const MobileExplorerFolderNode = ({
   }
   if (!data) return null;
   if (type === 'doc') {
-    return (
-      <MobileExplorerDocNode docId={data} operations={additionalOperations} />
-    );
+    return <ExplorerDocNode docId={data} operations={additionalOperations} />;
   } else if (type === 'collection') {
     return (
-      <MobileExplorerCollectionNode
+      <ExplorerCollectionNode
         collectionId={data}
         operations={additionalOperations}
       />
     );
   } else if (type === 'tag') {
-    return (
-      <MobileExplorerTagNode tagId={data} operations={additionalOperations} />
-    );
+    return <ExplorerTagNode tagId={data} operations={additionalOperations} />;
   }
 
   return;
@@ -382,7 +378,7 @@ const ExplorerFolderNodeFolder = ({
   }, []);
 
   return (
-    <MobileExplorerTreeNode
+    <ExplorerTreeNode
       icon={ExplorerFolderIcon}
       name={name}
       defaultRenaming={defaultRenaming}
@@ -395,7 +391,7 @@ const ExplorerFolderNodeFolder = ({
       data-testid={`explorer-folder-${node.id}`}
     >
       {children.map(child => (
-        <MobileExplorerFolderNode
+        <ExplorerFolderNode
           key={child.id}
           nodeId={child.id as string}
           defaultRenaming={child.id === newFolderId}
@@ -406,6 +402,6 @@ const ExplorerFolderNodeFolder = ({
         label={t['com.affine.rootAppSidebar.organize.folder.add-docs']()}
         onClick={() => handleAddToFolder('doc')}
       />
-    </MobileExplorerTreeNode>
+    </ExplorerTreeNode>
   );
 };

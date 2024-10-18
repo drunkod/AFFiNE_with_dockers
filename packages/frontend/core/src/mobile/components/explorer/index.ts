@@ -1,5 +1,5 @@
-export { MobileCollapsibleSection } from './layouts/collapsible-section';
-export { MobileExplorerCollections } from './sections/collections';
-export { MobileExplorerFavorites } from './sections/favorites';
-export { MobileExplorerOrganize } from './sections/organize';
-export { MobileExplorerTags } from './sections/tags';
+export { CollapsibleSection } from './layouts/collapsible-section';
+export { ExplorerCollections } from './sections/collections';
+export { ExplorerFavorites } from './sections/favorites';
+export { ExplorerOrganize } from './sections/organize';
+export { ExplorerTags } from './sections/tags';

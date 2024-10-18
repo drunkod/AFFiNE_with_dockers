@@ -18,14 +18,14 @@ import {
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileExplorerTreeNode } from '../../tree/node';
+import { ExplorerTreeNode } from '../../tree/node';
 import {
   useExplorerDocNodeOperations,
   useExplorerDocNodeOperationsMenu,
 } from './operations';
 import * as styles from './styles.css';
 
-export const MobileExplorerDocNode = ({
+export const ExplorerDocNode = ({
   docId,
   isLinked,
   operations: additionalOperations,
@@ -123,7 +123,7 @@ export const MobileExplorerDocNode = ({
   }
 
   return (
-    <MobileExplorerTreeNode
+    <ExplorerTreeNode
       icon={Icon}
       name={t.t(docTitle)}
       renameable
@@ -145,13 +145,13 @@ export const MobileExplorerDocNode = ({
       data-testid={`explorer-doc-${docId}`}
     >
       {children?.map(child => (
-        <MobileExplorerDocNode key={child.docId} docId={child.docId} isLinked />
+        <ExplorerDocNode key={child.docId} docId={child.docId} isLinked />
       ))}
 
       <AddItemPlaceholder
         label={t['com.affine.rootAppSidebar.explorer.doc-add-tooltip']()}
         onClick={handleAddLinkedPage}
       />
-    </MobileExplorerTreeNode>
+    </ExplorerTreeNode>
   );
 };

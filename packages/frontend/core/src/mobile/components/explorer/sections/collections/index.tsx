@@ -11,10 +11,10 @@ import { nanoid } from 'nanoid';
 import { useCallback } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileCollapsibleSection } from '../../layouts/collapsible-section';
-import { MobileExplorerCollectionNode } from '../../nodes/collection';
+import { CollapsibleSection } from '../../layouts/collapsible-section';
+import { ExplorerCollectionNode } from '../../nodes/collection';
 
-export const MobileExplorerCollections = () => {
+export const ExplorerCollections = () => {
   const t = useI18n();
   const { collectionService, workbenchService, explorerService } = useServices({
     CollectionService,
@@ -50,14 +50,14 @@ export const MobileExplorerCollections = () => {
   ]);
 
   return (
-    <MobileCollapsibleSection
+    <CollapsibleSection
       name="collections"
       testId="explorer-collections"
       title={t['com.affine.rootAppSidebar.collections']()}
     >
       <ExplorerTreeRoot>
         {collections.map(collection => (
-          <MobileExplorerCollectionNode
+          <ExplorerCollectionNode
             key={collection.id}
             collectionId={collection.id}
           />
@@ -68,6 +68,6 @@ export const MobileExplorerCollections = () => {
           onClick={handleCreateCollection}
         />
       </ExplorerTreeRoot>
-    </MobileCollapsibleSection>
+    </CollapsibleSection>
   );
 };

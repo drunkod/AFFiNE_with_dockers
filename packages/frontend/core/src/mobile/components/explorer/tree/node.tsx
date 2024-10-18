@@ -24,9 +24,9 @@ import {
 
 import * as styles from './node.css';
 
-interface MobileExplorerTreeNodeProps extends BaseExplorerTreeNodeProps {}
+interface ExplorerTreeNodeProps extends BaseExplorerTreeNodeProps {}
 
-export const MobileExplorerTreeNode = ({
+export const ExplorerTreeNode = ({
   children,
   icon: Icon,
   name: rawName,
@@ -46,7 +46,7 @@ export const MobileExplorerTreeNode = ({
   childrenPlaceholder,
   linkComponent: LinkComponent = WorkbenchLink,
   ...otherProps
-}: MobileExplorerTreeNodeProps) => {
+}: ExplorerTreeNodeProps) => {
   const t = useI18n();
   const context = useContext(ExplorerTreeContext);
   const level = context?.level ?? 0;

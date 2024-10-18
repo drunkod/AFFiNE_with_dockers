@@ -10,10 +10,10 @@ import { useLiveData, useServices } from '@toeverything/infra';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileCollapsibleSection } from '../../layouts/collapsible-section';
-import { MobileExplorerFolderNode } from '../../nodes/folder';
+import { CollapsibleSection } from '../../layouts/collapsible-section';
+import { ExplorerFolderNode } from '../../nodes/folder';
 
-export const MobileExplorerOrganize = () => {
+export const ExplorerOrganize = () => {
   const { organizeService, explorerService } = useServices({
     OrganizeService,
     ExplorerService,
@@ -46,14 +46,14 @@ export const MobileExplorerOrganize = () => {
   }, [collapsed]);
 
   return (
-    <MobileCollapsibleSection
+    <CollapsibleSection
       name="organize"
       title={t['com.affine.rootAppSidebar.organize']()}
     >
       {/* TODO(@CatsJuice): Organize loading UI */}
       <ExplorerTreeRoot placeholder={isLoading ? <Skeleton /> : null}>
         {folders.map(child => (
-          <MobileExplorerFolderNode
+          <ExplorerFolderNode
             key={child.id}
             nodeId={child.id as string}
             defaultRenaming={child.id === newFolderId}
@@ -65,6 +65,6 @@ export const MobileExplorerOrganize = () => {
           onClick={handleCreateFolder}
         />
       </ExplorerTreeRoot>
-    </MobileCollapsibleSection>
+    </CollapsibleSection>
   );
 };

@@ -12,15 +12,15 @@ import clsx from 'clsx';
 import { useCallback, useMemo, useState } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileExplorerTreeNode } from '../../tree/node';
-import { MobileExplorerDocNode } from '../doc';
+import { ExplorerTreeNode } from '../../tree/node';
+import { ExplorerDocNode } from '../doc';
 import {
   useExplorerTagNodeOperations,
   useExplorerTagNodeOperationsMenu,
 } from './operations';
 import * as styles from './styles.css';
 
-export const MobileExplorerTagNode = ({
+export const ExplorerTagNode = ({
   tagId,
   operations: additionalOperations,
   defaultRenaming,
@@ -91,7 +91,7 @@ export const MobileExplorerTagNode = ({
   }
 
   return (
-    <MobileExplorerTreeNode
+    <ExplorerTreeNode
       icon={Icon}
       name={tagName || t['Untitled']()}
       renameable
@@ -105,7 +105,7 @@ export const MobileExplorerTagNode = ({
       data-testid={`explorer-tag-${tagId}`}
     >
       <ExplorerTagNodeDocs tag={tagRecord} onNewDoc={handleNewDoc} />
-    </MobileExplorerTreeNode>
+    </ExplorerTreeNode>
   );
 };
 
@@ -127,7 +127,7 @@ export const ExplorerTagNodeDocs = ({
   return (
     <>
       {tagDocIds.map(docId => (
-        <MobileExplorerDocNode key={docId} docId={docId} />
+        <ExplorerDocNode key={docId} docId={docId} />
       ))}
       <AddItemPlaceholder label={t['New Page']()} onClick={onNewDoc} />
     </>

@@ -14,13 +14,13 @@ import {
 import { useCallback } from 'react';
 
 import { AddItemPlaceholder } from '../../layouts/add-item-placeholder';
-import { MobileCollapsibleSection } from '../../layouts/collapsible-section';
-import { MobileExplorerCollectionNode } from '../../nodes/collection';
-import { MobileExplorerDocNode } from '../../nodes/doc';
-import { MobileExplorerFolderNode } from '../../nodes/folder';
-import { MobileExplorerTagNode } from '../../nodes/tag';
+import { CollapsibleSection } from '../../layouts/collapsible-section';
+import { ExplorerCollectionNode } from '../../nodes/collection';
+import { ExplorerDocNode } from '../../nodes/doc';
+import { ExplorerFolderNode } from '../../nodes/folder';
+import { ExplorerTagNode } from '../../nodes/tag';
 
-export const MobileExplorerFavorites = () => {
+export const ExplorerFavorites = () => {
   const { favoriteService, workspaceService, explorerService } = useServices({
     FavoriteService,
     WorkspaceService,
@@ -46,7 +46,7 @@ export const MobileExplorerFavorites = () => {
   }, [createPage, explorerSection, favoriteService.favoriteList]);
 
   return (
-    <MobileCollapsibleSection
+    <CollapsibleSection
       name="favorites"
       title={t['com.affine.rootAppSidebar.favorites']()}
       testId="explorer-favorites"
@@ -54,7 +54,7 @@ export const MobileExplorerFavorites = () => {
     >
       <ExplorerTreeRoot placeholder={isLoading ? 'Loading' : null}>
         {favorites.map(favorite => (
-          <MobileFavoriteNode key={favorite.id} favorite={favorite} />
+          <FavoriteNode key={favorite.id} favorite={favorite} />
         ))}
         <AddItemPlaceholder
           data-testid="explorer-bar-add-favorite-button"
@@ -64,11 +64,11 @@ export const MobileExplorerFavorites = () => {
           label={t['New Page']()}
         />
       </ExplorerTreeRoot>
-    </MobileCollapsibleSection>
+    </CollapsibleSection>
   );
 };
 
-export const MobileFavoriteNode = ({
+export const FavoriteNode = ({
   favorite,
 }: {
   favorite: {
@@ -77,12 +77,12 @@ export const MobileFavoriteNode = ({
   };
 }) => {
   return favorite.type === 'doc' ? (
-    <MobileExplorerDocNode docId={favorite.id} />
+    <ExplorerDocNode docId={favorite.id} />
   ) : favorite.type === 'tag' ? (
-    <MobileExplorerTagNode tagId={favorite.id} />
+    <ExplorerTagNode tagId={favorite.id} />
   ) : favorite.type === 'folder' ? (
-    <MobileExplorerFolderNode nodeId={favorite.id} />
+    <ExplorerFolderNode nodeId={favorite.id} />
   ) : (
-    <MobileExplorerCollectionNode collectionId={favorite.id} />
+    <ExplorerCollectionNode collectionId={favorite.id} />
   );
 };

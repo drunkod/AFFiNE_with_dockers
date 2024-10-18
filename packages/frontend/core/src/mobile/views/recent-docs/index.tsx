@@ -3,7 +3,7 @@ import { useService, WorkspaceService } from '@toeverything/infra';
 import { useMemo } from 'react';
 
 import { DocCard } from '../../components/doc-card';
-import { MobileCollapsibleSection } from '../../components/explorer';
+import { CollapsibleSection } from '../../components/explorer';
 import * as styles from './styles.css';
 
 export const RecentDocs = ({ max = 5 }: { max?: number }) => {
@@ -22,7 +22,7 @@ export const RecentDocs = ({ max = 5 }: { max?: number }) => {
   }
 
   return (
-    <MobileCollapsibleSection
+    <CollapsibleSection
       name="recent"
       title="Recent"
       headerClassName={styles.header}
@@ -38,6 +38,6 @@ export const RecentDocs = ({ max = 5 }: { max?: number }) => {
           ))}
         </ul>
       </div>
-    </MobileCollapsibleSection>
+    </CollapsibleSection>
   );
 };
