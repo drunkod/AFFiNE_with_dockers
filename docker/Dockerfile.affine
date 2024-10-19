@@ -5,14 +5,14 @@ FROM ghcr.io/toeverything/affine-graphql:stable
 WORKDIR /app
 
 # Copy necessary scripts and configurations
-COPY ./scripts /app/scripts
-COPY ./dist /app/dist
+# COPY ./scripts /app/scripts
+# COPY ./dist /app/dist
 
 # Set environment variables
 ENV NODE_OPTIONS="--import=./scripts/register.js"
 ENV AFFINE_CONFIG_PATH=/root/.affine/config
-ENV REDIS_SERVER_HOST=redis
-ENV DATABASE_URL=postgres://affine:affine@postgres:5432/affine
+ENV REDIS_SERVER_HOST=172.17.0.3
+ENV DATABASE_URL=postgres://affine:affine@172.17.0.2:5432/affine
 ENV NODE_ENV=production
 
 # Command to run the application
