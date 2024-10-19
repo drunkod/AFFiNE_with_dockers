@@ -1,0 +1,14 @@
+# Dockerfile.postgres
+FROM postgres:16
+
+# Set environment variables
+ENV POSTGRES_USER=affine
+ENV POSTGRES_PASSWORD=affine
+ENV POSTGRES_DB=affine
+ENV PGDATA=/var/lib/postgresql/data/pgdata
+
+# Expose default Postgres port
+EXPOSE 5432
+
+# Command to run Postgres
+CMD ["postgres"]

@@ -1,0 +1,14 @@
+# Dockerfile.redis
+FROM redis
+
+# Set working directory
+WORKDIR /data
+
+# Copy any necessary configuration files if needed
+# COPY ./redis.conf /usr/local/etc/redis/redis.conf
+
+# Expose default Redis port
+EXPOSE 6379
+
+# Command to run Redis
+CMD ["redis-server"]
