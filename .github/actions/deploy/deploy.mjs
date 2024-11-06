@@ -51,7 +51,7 @@ const replicaConfig = {
     web: 2,
     graphql: Number(process.env.BETA_GRAPHQL_REPLICA) || 2,
     sync: Number(process.env.BETA_SYNC_REPLICA) || 2,
-    renderer: Number(process.env.BETA_RENDERER_REPLICA) || 3,
+    renderer: Number(process.env.BETA_RENDERER_REPLICA) || 2,
   },
   canary: {
     web: 2,

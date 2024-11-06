@@ -1,4 +1,4 @@
-import { notify } from '@affine/component';
+import { notify, useConfirmModal } from '@affine/component';
 import {
   Menu,
   MenuItem,
@@ -7,18 +7,23 @@ import {
 } from '@affine/component/ui/menu';
 import { PageHistoryModal } from '@affine/core/components/affine/page-history-modal';
 import { ShareMenuContent } from '@affine/core/components/affine/share-page-modal/share-menu';
-import { openHistoryTipsModalAtom } from '@affine/core/components/atoms';
 import { useBlockSuiteMetaHelper } from '@affine/core/components/hooks/affine/use-block-suite-meta-helper';
 import { useEnableCloud } from '@affine/core/components/hooks/affine/use-enable-cloud';
 import { useExportPage } from '@affine/core/components/hooks/affine/use-export-page';
-import { useTrashModalHelper } from '@affine/core/components/hooks/affine/use-trash-modal-helper';
-import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import { useDocMetaHelper } from '@affine/core/components/hooks/use-block-suite-page-meta';
-import { Export, MoveToTrash } from '@affine/core/components/page-list';
+import {
+  Export,
+  MoveToTrash,
+  Snapshot,
+} from '@affine/core/components/page-list';
 import { IsFavoriteIcon } from '@affine/core/components/pure/icons';
 import { useDetailPageHeaderResponsive } from '@affine/core/desktop/pages/workspace/detail-page/use-header-responsive';
-import { DocInfoService } from '@affine/core/modules/doc-info';
+import {
+  GlobalDialogService,
+  WorkspaceDialogService,
+} from '@affine/core/modules/dialogs';
 import { EditorService } from '@affine/core/modules/editor';
+import { OpenInAppService } from '@affine/core/modules/open-in-app/services';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { ViewService } from '@affine/core/modules/workbench/services/view';
 import { WorkspaceFlavour } from '@affine/env/workspace';
@@ -33,6 +38,7 @@ import {
   HistoryIcon,
   ImportIcon,
   InformationIcon,
+  LocalWorkspaceIcon,
   OpenInNewIcon,
   PageIcon,
   SaveIcon,
@@ -40,13 +46,18 @@ import {
   SplitViewIcon,
   TocIcon,
 } from '@blocksuite/icons/rc';
-import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
+import {
+  FeatureFlagService,
+  useLiveData,
+  useService,
+  useServiceOptional,
+  WorkspaceService,
+} from '@toeverything/infra';
 import { useCallback, useState } from 'react';
 
 import { HeaderDropDownButton } from '../../../pure/header-drop-down-button';
-import { usePageHelper } from '../../block-suite-page-list/utils';
 import { useFavorite } from '../favorite';
+import { HistoryTipsModal } from './history-tips-modal';
 
 type PageMenuProps = {
   rename?: () => void;
@@ -67,8 +78,8 @@ export const PageHeaderMenuButton = ({
   const confirmEnableCloud = useEnableCloud();
 
   const workspace = useService(WorkspaceService).workspace;
-  const docCollection = workspace.docCollection;
 
+  const globalDialogService = useService(GlobalDialogService);
   const editorService = useService(EditorService);
   const isInTrash = useLiveData(
     editorService.editor.doc.meta$.map(meta => meta.trash)
@@ -77,12 +88,15 @@ export const PageHeaderMenuButton = ({
   const primaryMode = useLiveData(editorService.editor.doc.primaryMode$);
 
   const workbench = useService(WorkbenchService).workbench;
+  const featureFlagService = useService(FeatureFlagService);
+  const enableSnapshotImportExport = useLiveData(
+    featureFlagService.flags.enable_snapshot_import_export.$
+  );
+  const openInAppService = useServiceOptional(OpenInAppService);
 
   const { favorite, toggleFavorite } = useFavorite(pageId);
 
   const { duplicate } = useBlockSuiteMetaHelper();
-  const { importFile } = usePageHelper(docCollection);
-  const { setTrashModal } = useTrashModalHelper();
 
   const [isEditing, setEditing] = useState(!page.readonly);
   const { setDocReadonly } = useDocMetaHelper();
@@ -106,7 +120,7 @@ export const PageHeaderMenuButton = ({
   }, [openSidePanel]);
 
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
-  const setOpenHistoryTipsModal = useSetAtom(openHistoryTipsModalAtom);
+  const [openHistoryTipsModal, setOpenHistoryTipsModal] = useState(false);
 
   const openHistoryModal = useCallback(() => {
     track.$.header.history.open();
@@ -116,11 +130,11 @@ export const PageHeaderMenuButton = ({
     return setOpenHistoryTipsModal(true);
   }, [setOpenHistoryTipsModal, workspace.flavour]);
 
-  const docInfoModal = useService(DocInfoService).modal;
+  const workspaceDialogService = useService(WorkspaceDialogService);
   const openInfoModal = useCallback(() => {
     track.$.header.pageInfo.open();
-    docInfoModal.open(pageId);
-  }, [docInfoModal, pageId]);
+    workspaceDialogService.open('doc-info', { docId: pageId });
+  }, [workspaceDialogService, pageId]);
 
   const handleOpenInNewTab = useCallback(() => {
     workbench.openDoc(pageId, {
@@ -134,14 +148,22 @@ export const PageHeaderMenuButton = ({
     });
   }, [pageId, workbench]);
 
+  const { openConfirmModal } = useConfirmModal();
+
   const handleOpenTrashModal = useCallback(() => {
     track.$.header.docOptions.deleteDoc();
-    setTrashModal({
-      open: true,
-      pageIds: [pageId],
-      pageTitles: [editorService.editor.doc.meta$.value.title ?? ''],
+    openConfirmModal({
+      title: t['com.affine.moveToTrash.confirmModal.title'](),
+      description: t['com.affine.moveToTrash.confirmModal.description']({
+        title: editorService.editor.doc.title$.value || t['Untitled'](),
+      }),
+      cancelText: t['com.affine.confirmModal.button.cancel'](),
+      confirmText: t.Delete(),
+      onConfirm: () => {
+        editorService.editor.doc.moveToTrash();
+      },
     });
-  }, [editorService, pageId, setTrashModal]);
+  }, [editorService.editor.doc, openConfirmModal, t]);
 
   const handleRename = useCallback(() => {
     rename?.();
@@ -150,6 +172,7 @@ export const PageHeaderMenuButton = ({
 
   const handleSwitchMode = useCallback(() => {
     const mode = primaryMode === 'page' ? 'edgeless' : 'page';
+    editorService.editor.setMode(mode);
     editorService.editor.doc.setPrimaryMode(mode);
     track.$.header.docOptions.switchPageMode({
       mode,
@@ -181,19 +204,10 @@ export const PageHeaderMenuButton = ({
     });
   }, [duplicate, pageId]);
 
-  const onImportFile = useAsyncCallback(async () => {
-    const options = await importFile();
-    track.$.header.docOptions.import();
-    if (options.isWorkspaceFile) {
-      track.$.header.actions.createWorkspace({
-        control: 'import',
-      });
-    } else {
-      track.$.header.actions.createDoc({
-        control: 'import',
-      });
-    }
-  }, [importFile]);
+  const handleOpenImportModal = useCallback(() => {
+    track.$.header.importModal.open();
+    globalDialogService.open('import', undefined);
+  }, [globalDialogService]);
 
   const handleShareMenuOpenChange = useCallback((open: boolean) => {
     if (open) {
@@ -256,6 +270,10 @@ export const PageHeaderMenuButton = ({
       <MenuSeparator />
     </>
   );
+
+  const onOpenInDesktop = useCallback(() => {
+    openInAppService?.showOpenInAppPage();
+  }, [openInAppService]);
 
   const EditMenu = (
     <>
@@ -351,16 +369,27 @@ export const PageHeaderMenuButton = ({
       <MenuItem
         prefixIcon={<ImportIcon />}
         data-testid="editor-option-menu-import"
-        onSelect={onImportFile}
+        onSelect={handleOpenImportModal}
       >
         {t['Import']()}
       </MenuItem>
       <Export exportHandler={exportHandler} pageMode={currentMode} />
+      {enableSnapshotImportExport && <Snapshot />}
       <MenuSeparator />
       <MoveToTrash
         data-testid="editor-option-menu-delete"
         onSelect={handleOpenTrashModal}
       />
+      {BUILD_CONFIG.isWeb &&
+      workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD ? (
+        <MenuItem
+          prefixIcon={<LocalWorkspaceIcon />}
+          data-testid="editor-option-menu-link"
+          onSelect={onOpenInDesktop}
+        >
+          {t['com.affine.header.option.open-in-desktop']()}
+        </MenuItem>
+      ) : null}
     </>
   );
   if (isInTrash) {
@@ -387,6 +416,10 @@ export const PageHeaderMenuButton = ({
           onOpenChange={setHistoryModalOpen}
         />
       ) : null}
+      <HistoryTipsModal
+        open={openHistoryTipsModal}
+        setOpen={setOpenHistoryTipsModal}
+      />
     </>
   );
 };

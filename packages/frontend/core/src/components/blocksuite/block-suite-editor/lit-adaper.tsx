@@ -3,12 +3,16 @@ import {
   useConfirmModal,
   useLitPortalFactory,
 } from '@affine/component';
-import { ServerConfigService } from '@affine/core/modules/cloud';
+import type {
+  DatabaseRow,
+  DatabaseValueCell,
+} from '@affine/core/modules/doc-info/types';
 import { EditorService } from '@affine/core/modules/editor';
-import { EditorSettingService } from '@affine/core/modules/editor-settting';
+import { EditorSettingService } from '@affine/core/modules/editor-setting';
 import { JournalService } from '@affine/core/modules/journal';
 import { toURLSearchParams } from '@affine/core/modules/navigation';
 import { PeekViewService } from '@affine/core/modules/peek-view/services/peek-view';
+import track from '@affine/track';
 import type { DocMode } from '@blocksuite/affine/blocks';
 import {
   DocTitle,
@@ -17,6 +21,7 @@ import {
 } from '@blocksuite/affine/presets';
 import type { Doc } from '@blocksuite/affine/store';
 import {
+  type DocCustomPropertyInfo,
   DocService,
   DocsService,
   FeatureFlagService,
@@ -39,7 +44,10 @@ import {
   AffinePageReference,
   AffineSharedPageReference,
 } from '../../affine/reference-link';
-import { DocPropertiesTable } from '../../doc-properties';
+import {
+  type DefaultOpenProperty,
+  DocPropertiesTable,
+} from '../../doc-properties';
 import { BiDirectionalLinkPanel } from './bi-directional-link-panel';
 import { BlocksuiteEditorJournalDocTitle } from './journal-doc-title';
 import {
@@ -76,6 +84,7 @@ const adapted = {
 interface BlocksuiteEditorProps {
   page: Doc;
   shared?: boolean;
+  defaultOpenProperty?: DefaultOpenProperty;
 }
 
 const usePatchSpecs = (shared: boolean, mode: DocMode) => {
@@ -87,7 +96,6 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
     editorService,
     workspaceService,
     featureFlagService,
-    serverConfigService,
   } = useServices({
     PeekViewService,
     DocService,
@@ -95,12 +103,8 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
     WorkspaceService,
     EditorService,
     FeatureFlagService,
-    ServerConfigService,
   });
   const framework = useFramework();
-  const serverFeatures = useLiveData(
-    serverConfigService.serverConfig.features$
-  );
   const referenceRenderer: ReferenceReactRenderer = useMemo(() => {
     return function customReference(reference) {
       const data = reference.delta.attributes?.reference;
@@ -126,17 +130,11 @@ const usePatchSpecs = (shared: boolean, mode: DocMode) => {
   }, [workspaceService]);
 
   const specs = useMemo(() => {
-    const enableAI =
-      serverFeatures?.copilot && featureFlagService.flags.enable_ai.value;
+    const enableAI = featureFlagService.flags.enable_ai.value;
     return mode === 'edgeless'
       ? createEdgelessModeSpecs(framework, !!enableAI)
       : createPageModeSpecs(framework, !!enableAI);
-  }, [
-    serverFeatures?.copilot,
-    featureFlagService.flags.enable_ai.value,
-    mode,
-    framework,
-  ]);
+  }, [featureFlagService.flags.enable_ai.value, mode, framework]);
 
   const confirmModal = useConfirmModal();
   const patchedSpecs = useMemo(() => {
@@ -191,7 +189,13 @@ export const BlocksuiteDocEditor = forwardRef<
     titleRef?: React.Ref<DocTitle>;
   }
 >(function BlocksuiteDocEditor(
-  { page, shared, onClickBlank, titleRef: externalTitleRef },
+  {
+    page,
+    shared,
+    onClickBlank,
+    titleRef: externalTitleRef,
+    defaultOpenProperty,
+  },
   ref
 ) {
   const titleRef = useRef<DocTitle | null>(null);
@@ -237,6 +241,32 @@ export const BlocksuiteDocEditor = forwardRef<
     )
   );
 
+  const displayDocInfo = useLiveData(
+    editorSettingService.editorSetting.settings$.selector(s => s.displayDocInfo)
+  );
+
+  const onPropertyChange = useCallback((property: DocCustomPropertyInfo) => {
+    track.doc.inlineDocInfo.property.editProperty({
+      type: property.type,
+    });
+  }, []);
+
+  const onPropertyAdded = useCallback((property: DocCustomPropertyInfo) => {
+    track.doc.inlineDocInfo.property.addProperty({
+      type: property.type,
+      control: 'at menu',
+    });
+  }, []);
+
+  const onDatabasePropertyChange = useCallback(
+    (_row: DatabaseRow, cell: DatabaseValueCell) => {
+      track.doc.inlineDocInfo.databaseProperty.editProperty({
+        type: cell.property.type$.value,
+      });
+    },
+    []
+  );
+
   return (
     <>
       <div className={styles.affineDocViewport} style={{ height: '100%' }}>
@@ -245,7 +275,14 @@ export const BlocksuiteDocEditor = forwardRef<
         ) : (
           <BlocksuiteEditorJournalDocTitle page={page} />
         )}
-        {!shared ? <DocPropertiesTable /> : null}
+        {!shared && displayDocInfo ? (
+          <DocPropertiesTable
+            onDatabasePropertyChange={onDatabasePropertyChange}
+            onPropertyChange={onPropertyChange}
+            onPropertyAdded={onPropertyAdded}
+            defaultOpenProperty={defaultOpenProperty}
+          />
+        ) : null}
         <adapted.DocEditor
           className={styles.docContainer}
           ref={onDocRef}

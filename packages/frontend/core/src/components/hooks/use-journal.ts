@@ -1,8 +1,8 @@
-import { EditorSettingService } from '@affine/core/modules/editor-settting';
+import { EditorSettingService } from '@affine/core/modules/editor-setting';
 import { JournalService } from '@affine/core/modules/journal';
 import { i18nTime } from '@affine/i18n';
 import { track } from '@affine/track';
-import { type DocCollection, Text } from '@blocksuite/affine/store';
+import { Text } from '@blocksuite/affine/store';
 import {
   type DocProps,
   DocsService,
@@ -14,7 +14,6 @@ import dayjs from 'dayjs';
 import { useCallback, useMemo } from 'react';
 
 import { WorkbenchService } from '../../modules/workbench';
-import { useDocCollectionHelper } from './use-block-suite-workspace-helper';
 
 type MaybeDate = Date | string | number;
 export const JOURNAL_DATE_FORMAT = 'YYYY-MM-DD';
@@ -33,8 +32,7 @@ function toDayjs(j?: string | false) {
 /**
  * @deprecated use `JournalService` directly
  */
-export const useJournalHelper = (docCollection: DocCollection) => {
-  const bsWorkspaceHelper = useDocCollectionHelper(docCollection);
+export const useJournalHelper = () => {
   const { docsService, editorSettingService, journalService } = useServices({
     DocsService,
     EditorSettingService,
@@ -48,10 +46,11 @@ export const useJournalHelper = (docCollection: DocCollection) => {
     (maybeDate: MaybeDate) => {
       const day = dayjs(maybeDate);
       const title = day.format(JOURNAL_DATE_FORMAT);
-      const page = bsWorkspaceHelper.createDoc();
-      docsService.list.setPrimaryMode(page.id, 'page');
+      const docRecord = docsService.createDoc();
+      const { doc, release } = docsService.open(docRecord.id);
+      docsService.list.setPrimaryMode(docRecord.id, 'page');
       // set created date to match the journal date
-      page.collection.setDocMeta(page.id, {
+      docRecord.setMeta({
         createDate: dayjs()
           .set('year', day.year())
           .set('month', day.month())
@@ -63,11 +62,12 @@ export const useJournalHelper = (docCollection: DocCollection) => {
         page: { title: new Text(title) },
         note: editorSettingService.editorSetting.get('affine:note'),
       };
-      initDocFromProps(page, docProps);
-      journalService.setJournalDate(page.id, title);
-      return page;
+      initDocFromProps(doc.blockSuiteDoc, docProps);
+      release();
+      journalService.setJournalDate(docRecord.id, title);
+      return docRecord;
     },
-    [journalService, bsWorkspaceHelper, docsService.list, editorSettingService]
+    [docsService, editorSettingService.editorSetting, journalService]
   );
 
   /**
@@ -104,8 +104,8 @@ export const useJournalHelper = (docCollection: DocCollection) => {
 };
 
 // split useJournalRouteHelper since it requires a <Route /> context, which may not work in lit
-export const useJournalRouteHelper = (docCollection: DocCollection) => {
-  const { getJournalByDate } = useJournalHelper(docCollection);
+export const useJournalRouteHelper = () => {
+  const { getJournalByDate } = useJournalHelper();
   const workbench = useService(WorkbenchService).workbench;
   /**
    * open journal by date, create one if not exist

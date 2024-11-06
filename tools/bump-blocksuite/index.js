@@ -25,6 +25,8 @@ const info = await fetch('https://registry.npmjs.org/@blocksuite/affine').then(
 
 const latestVersion = info['dist-tags'].latest;
 const latestHash = latestVersion.split('-').pop();
+const latestGitHead = info.versions[latestHash].gitHead;
+const oldGitHead = info.versions[oldHash].gitHead;
 
 if (oldHash === latestHash) {
   console.info(chalk.greenBright('Already updated'));
@@ -85,8 +87,6 @@ remote.fetch(
   )
 );
 
-const latest = repo.findCommit(latestHash);
-
 const commits = {
   Features: [],
   Bugfix: [],
@@ -94,11 +94,17 @@ const commits = {
   Misc: [],
 };
 
+if (!latestGitHead) {
+  console.info('latestGitHead is not found');
+  console.info('Skip generating changelog');
+  process.exit(0);
+}
+
 for (const oid of repo
   .revWalk()
-  .push(latest.id())
+  .push(latestGitHead)
   .setSorting(Sort.Time & Sort.Topological)) {
-  if (oid.startsWith(oldHash)) {
+  if (oid.startsWith(oldGitHead)) {
     break;
   }
   const commit = repo.findCommit(oid);

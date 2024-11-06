@@ -6,34 +6,40 @@ import {
 } from '@affine/component/auth-components';
 import { Button } from '@affine/component/ui/button';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
-import { AuthService } from '@affine/core/modules/cloud';
+import { AuthService, CaptchaService } from '@affine/core/modules/cloud';
 import { useI18n } from '@affine/i18n';
-import { useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import type { FC } from 'react';
 import { useCallback, useState } from 'react';
 
 import type { AuthPanelProps } from './index';
 import * as styles from './style.css';
-import { useCaptcha } from './use-captcha';
+import { Captcha } from './use-captcha';
 
 export const SignInWithPassword: FC<AuthPanelProps<'signInWithPassword'>> = ({
   setAuthData,
   email,
+  redirectUrl,
 }) => {
   const t = useI18n();
   const authService = useService(AuthService);
 
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-  const [verifyToken, challenge, refreshChallenge] = useCaptcha();
+  const captchaService = useService(CaptchaService);
+
+  const verifyToken = useLiveData(captchaService.verifyToken$);
+  const needCaptcha = useLiveData(captchaService.needCaptcha$);
+  const challenge = useLiveData(captchaService.challenge$);
   const [isLoading, setIsLoading] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
 
   const onSignIn = useAsyncCallback(async () => {
-    if (isLoading || !verifyToken) return;
+    if (isLoading) return;
     setIsLoading(true);
 
     try {
+      captchaService.revalidate();
       await authService.signInPassword({
         email,
         password,
@@ -43,28 +49,31 @@ export const SignInWithPassword: FC<AuthPanelProps<'signInWithPassword'>> = ({
     } catch (err) {
       console.error(err);
       setPasswordError(true);
-      refreshChallenge?.();
     } finally {
       setIsLoading(false);
     }
   }, [
     isLoading,
     verifyToken,
+    captchaService,
     authService,
     email,
     password,
     challenge,
-    refreshChallenge,
   ]);
 
   const sendMagicLink = useAsyncCallback(async () => {
     if (sendingEmail) return;
     setSendingEmail(true);
     try {
-      if (verifyToken) {
-        await authService.sendEmailMagicLink(email, verifyToken, challenge);
-        setAuthData({ state: 'afterSignInSendEmail' });
-      }
+      captchaService.revalidate();
+      await authService.sendEmailMagicLink(
+        email,
+        verifyToken,
+        challenge,
+        redirectUrl
+      );
+      setAuthData({ state: 'afterSignInSendEmail' });
     } catch (err) {
       console.error(err);
       notify.error({
@@ -73,7 +82,16 @@ export const SignInWithPassword: FC<AuthPanelProps<'signInWithPassword'>> = ({
       // TODO(@eyhn): handle error better
     }
     setSendingEmail(false);
-  }, [sendingEmail, verifyToken, authService, email, challenge, setAuthData]);
+  }, [
+    sendingEmail,
+    verifyToken,
+    captchaService,
+    authService,
+    email,
+    challenge,
+    redirectUrl,
+    setAuthData,
+  ]);
 
   const sendChangePasswordEmail = useCallback(() => {
     setAuthData({ state: 'sendEmail', emailType: 'changePassword' });
@@ -125,21 +143,24 @@ export const SignInWithPassword: FC<AuthPanelProps<'signInWithPassword'>> = ({
             {t['com.affine.auth.forget']()}
           </a>
         </div>
-        <div className={styles.sendMagicLinkButtonRow}>
-          <a
-            data-testid="send-magic-link-button"
-            className={styles.linkButton}
-            onClick={sendMagicLink}
-          >
-            {t['com.affine.auth.sign.auth.code.send-email.sign-in']()}
-          </a>
-        </div>
+        {(verifyToken || !needCaptcha) && (
+          <div className={styles.sendMagicLinkButtonRow}>
+            <a
+              data-testid="send-magic-link-button"
+              className={styles.linkButton}
+              onClick={sendMagicLink}
+            >
+              {t['com.affine.auth.sign.auth.code.send-email.sign-in']()}
+            </a>
+          </div>
+        )}
+        {!verifyToken && needCaptcha && <Captcha />}
         <Button
           data-testid="sign-in-button"
           variant="primary"
           size="extraLarge"
           style={{ width: '100%' }}
-          disabled={isLoading}
+          disabled={isLoading || (!verifyToken && needCaptcha)}
           onClick={onSignIn}
         >
           {t['com.affine.auth.sign.in']()}

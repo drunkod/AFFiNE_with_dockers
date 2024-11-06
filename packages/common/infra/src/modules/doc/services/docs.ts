@@ -11,6 +11,7 @@ import { ObjectPool } from '../../../utils';
 import type { Doc } from '../entities/doc';
 import { DocPropertyList } from '../entities/property-list';
 import { DocRecordList } from '../entities/record-list';
+import { DocCreated } from '../events';
 import { DocScope } from '../scopes/doc';
 import type { DocsStore } from '../stores/docs';
 import { DocService } from './doc';
@@ -74,6 +75,7 @@ export class DocsService extends Service {
     if (options.primaryMode) {
       docRecord.setPrimaryMode(options.primaryMode);
     }
+    this.eventBus.emit(DocCreated, docRecord);
     return docRecord;
   }
 

@@ -1,8 +1,15 @@
 import { AppSidebarService } from '@affine/core/modules/app-sidebar';
+import { DesktopApiService } from '@affine/core/modules/desktop-api';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { I18nService } from '@affine/core/modules/i18n';
+import { UrlService } from '@affine/core/modules/url';
 import { useI18n } from '@affine/i18n';
 import type { AffineEditorContainer } from '@blocksuite/affine/presets';
-import { useService, WorkspaceService } from '@toeverything/infra';
+import {
+  useService,
+  useServiceOptional,
+  WorkspaceService,
+} from '@toeverything/infra';
 import { useStore } from 'jotai';
 import { useTheme } from 'next-themes';
 import { useEffect } from 'react';
@@ -19,8 +26,7 @@ import {
   registerAffineUpdatesCommands,
 } from '../../commands';
 import { usePageHelper } from '../../components/blocksuite/block-suite-page-list/utils';
-import { CreateWorkspaceDialogService } from '../../modules/create-workspace';
-import { EditorSettingService } from '../../modules/editor-settting';
+import { EditorSettingService } from '../../modules/editor-setting';
 import { CMDKQuickSearchService } from '../../modules/quicksearch/services/cmdk';
 import { useActiveBlocksuiteEditor } from './use-block-suite-editor';
 import { useNavigateHelper } from './use-navigate-helper';
@@ -66,14 +72,18 @@ export function useRegisterWorkspaceCommands() {
   const t = useI18n();
   const theme = useTheme();
   const currentWorkspace = useService(WorkspaceService).workspace;
+  const urlService = useService(UrlService);
   const pageHelper = usePageHelper(currentWorkspace.docCollection);
   const navigationHelper = useNavigateHelper();
   const [editor] = useActiveBlocksuiteEditor();
   const cmdkQuickSearchService = useService(CMDKQuickSearchService);
   const editorSettingService = useService(EditorSettingService);
-  const createWorkspaceDialogService = useService(CreateWorkspaceDialogService);
+  const globalDialogService = useService(GlobalDialogService);
   const appSidebarService = useService(AppSidebarService);
   const i18n = useService(I18nService).i18n;
+
+  const quitAndInstall =
+    useServiceOptional(DesktopApiService)?.handler.updater.quitAndInstall;
 
   useEffect(() => {
     const unsub = registerCMDKCommand(cmdkQuickSearchService, editor);
@@ -85,15 +95,20 @@ export function useRegisterWorkspaceCommands() {
 
   // register AffineUpdatesCommands
   useEffect(() => {
+    if (!quitAndInstall) {
+      return;
+    }
+
     const unsub = registerAffineUpdatesCommands({
       store,
       t,
+      quitAndInstall,
     });
 
     return () => {
       unsub();
     };
-  }, [store, t]);
+  }, [quitAndInstall, store, t]);
 
   // register AffineNavigationCommands
   useEffect(() => {
@@ -102,12 +117,19 @@ export function useRegisterWorkspaceCommands() {
       t,
       docCollection: currentWorkspace.docCollection,
       navigationHelper,
+      globalDialogService,
     });
 
     return () => {
       unsub();
     };
-  }, [store, t, currentWorkspace.docCollection, navigationHelper]);
+  }, [
+    store,
+    t,
+    currentWorkspace.docCollection,
+    navigationHelper,
+    globalDialogService,
+  ]);
 
   // register AffineSettingsCommands
   useEffect(() => {
@@ -147,7 +169,7 @@ export function useRegisterWorkspaceCommands() {
   // register AffineCreationCommands
   useEffect(() => {
     const unsub = registerAffineCreationCommands({
-      createWorkspaceDialogService,
+      globalDialogService,
       pageHelper: pageHelper,
       t,
     });
@@ -155,17 +177,18 @@ export function useRegisterWorkspaceCommands() {
     return () => {
       unsub();
     };
-  }, [store, pageHelper, t, createWorkspaceDialogService]);
+  }, [store, pageHelper, t, globalDialogService]);
 
   // register AffineHelpCommands
   useEffect(() => {
     const unsub = registerAffineHelpCommands({
-      store,
       t,
+      urlService,
+      globalDialogService,
     });
 
     return () => {
       unsub();
     };
-  }, [store, t]);
+  }, [t, globalDialogService, urlService]);
 }

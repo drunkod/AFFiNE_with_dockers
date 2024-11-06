@@ -79,15 +79,12 @@ export const modalContentWrapper = style({
   alignItems: 'center',
   justifyContent: 'center',
   zIndex: cssVar('zIndexModal'),
-  '@media': {
-    'screen and (width <= 640px)': {
-      // todo: adjust animation
+
+  selectors: {
+    '&[data-mobile]': {
       alignItems: 'flex-end',
       paddingBottom: 'env(safe-area-inset-bottom, 20px)',
     },
-  },
-
-  selectors: {
     '&[data-full-screen="true"]': {
       padding: '0 !important',
     },
@@ -178,32 +175,6 @@ export const modalDescription = style({
   whiteSpace: 'pre-wrap',
   overflowWrap: 'break-word',
 });
-export const modalFooter = style({
-  display: 'flex',
-  justifyContent: 'flex-end',
-  alignItems: 'center',
-  paddingTop: '40px',
-  marginTop: 'auto',
-  gap: '20px',
-  selectors: {
-    '&.modalFooterWithChildren': {
-      paddingTop: '20px',
-    },
-    '&.reverse': {
-      flexDirection: 'row-reverse',
-      justifyContent: 'flex-start',
-    },
-  },
-});
-export const confirmModalContent = style({
-  height: '100%',
-  overflowY: 'auto',
-  padding: '12px 4px 20px 4px',
-});
-export const confirmModalContainer = style({
-  display: 'flex',
-  flexDirection: 'column',
-});
 
 globalStyle(`[data-modal="false"]${modalContentWrapper}`, {
   pointerEvents: 'none',
@@ -211,10 +182,4 @@ globalStyle(`[data-modal="false"]${modalContentWrapper}`, {
 
 globalStyle(`[data-modal="false"] ${modalContent}`, {
   pointerEvents: 'auto',
-});
-
-export const promptModalContent = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
 });

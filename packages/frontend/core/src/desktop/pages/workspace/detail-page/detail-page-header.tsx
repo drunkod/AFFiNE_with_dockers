@@ -67,14 +67,9 @@ export function JournalPageHeader({ page, workspace }: PageHeaderProps) {
       <ViewIcon icon="journal" />
       <EditorModeSwitch />
       <div className={styles.journalWeekPicker}>
-        <JournalWeekDatePicker
-          docCollection={workspace.docCollection}
-          page={page}
-        />
+        <JournalWeekDatePicker page={page} />
       </div>
-      {hideToday ? null : (
-        <JournalTodayButton docCollection={workspace.docCollection} />
-      )}
+      {hideToday ? null : <JournalTodayButton />}
       <HeaderDivider />
       <PageHeaderMenuButton
         isJournal

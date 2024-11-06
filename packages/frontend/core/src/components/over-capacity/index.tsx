@@ -1,9 +1,8 @@
 import { notify } from '@affine/component';
-import { openSettingModalAtom } from '@affine/core/components/atoms';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
 import { useI18n } from '@affine/i18n';
 import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
 import { debounce } from 'lodash-es';
 import { useCallback, useEffect } from 'react';
 
@@ -20,14 +19,13 @@ export const OverCapacityNotification = () => {
     permissionService.permission.revalidate();
   }, [permissionService]);
 
-  const setSettingModalAtom = useSetAtom(openSettingModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
   const jumpToPricePlan = useCallback(() => {
-    setSettingModalAtom({
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'plans',
       scrollAnchor: 'cloudPricingPlan',
     });
-  }, [setSettingModalAtom]);
+  }, [globalDialogService]);
 
   // debounce sync engine status
   useEffect(() => {

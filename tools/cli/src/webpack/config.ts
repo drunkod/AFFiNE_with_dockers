@@ -69,7 +69,9 @@ export const getPublicPath = (buildFlags: BuildFlags) => {
   if (
     buildFlags.mode === 'development' ||
     process.env.COVERAGE ||
-    buildFlags.distribution === 'desktop'
+    buildFlags.distribution === 'desktop' ||
+    buildFlags.distribution === 'ios' ||
+    buildFlags.distribution === 'android'
   ) {
     return '/';
   }
@@ -332,7 +334,9 @@ export const createConfiguration: (
               },
             ],
           }),
-      buildFlags.mode === 'production' && process.env.R2_SECRET_ACCESS_KEY
+      buildFlags.mode === 'production' &&
+      (buildConfig.isWeb || buildConfig.isMobileWeb) &&
+      process.env.R2_SECRET_ACCESS_KEY
         ? new WebpackS3Plugin()
         : null,
     ]),
@@ -398,11 +402,6 @@ export const createConfiguration: (
         maxInitialRequests: Infinity,
         chunks: 'all',
         cacheGroups: {
-          errorHandler: {
-            test: /global-error-handler/,
-            priority: 1000,
-            enforce: true,
-          },
           defaultVendors: {
             test: `[\\/]node_modules[\\/](?!.*vanilla-extract)`,
             priority: -10,

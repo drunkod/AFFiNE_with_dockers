@@ -149,6 +149,7 @@ export class DocRendererController {
     // TODO(@forehalo): how can we enable the type reference to @affine/env
     const env: Record<string, any> = {
       publicPath: assets.publicPath,
+      renderer: 'ssr',
     };
 
     if (this.config.isSelfhosted) {
@@ -180,7 +181,7 @@ export class DocRendererController {
 
     <title>${title}</title>
     <meta name="theme-color" content="#fafafa" />
-    ${assets.publicPath.startsWith('/') ? '' : `<link rel="preconnect" href="${assets.publicPath}">`}
+    ${assets.publicPath.startsWith('/') ? '' : `<link rel="preconnect" href="${assets.publicPath}" />`}
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" sizes="192x192" href="/favicon-192.png" />
@@ -197,7 +198,6 @@ export class DocRendererController {
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${summary}" />
     <meta property="og:image" content="${image}" />
-    <meta name="renderer" content="ssr" />
     ${Object.entries(env)
       .map(([key, val]) => `<meta name="env:${key}" content="${val}" />`)
       .join('\n')}
@@ -222,9 +222,7 @@ export class DocRendererController {
         readFileSync(manifestPath, 'utf-8')
       );
 
-      const publicPath = this.config.isSelfhosted
-        ? this.config.server.host + '/'
-        : assets.publicPath;
+      const publicPath = this.config.isSelfhosted ? '/' : assets.publicPath;
 
       assets.publicPath = publicPath;
       assets.js = assets.js.map(path => publicPath + path);

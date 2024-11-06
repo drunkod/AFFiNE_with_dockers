@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { forwardRef, useCallback, useLayoutEffect, useRef } from 'react';
 import { useTransition } from 'react-transition-state';
 
+import { Tooltip, type TooltipProps } from '../../ui/tooltip';
 import * as styles from './resize-panel.css';
 
 export interface ResizeHandleProps
@@ -17,6 +18,10 @@ export interface ResizeHandleProps
   onOpen: (open: boolean) => void;
   onResizing: (resizing: boolean) => void;
   onWidthChange: (width: number) => void;
+  tooltip?: TooltipProps['content'];
+  tooltipShortcut?: TooltipProps['shortcut'];
+  tooltipOptions?: Partial<Omit<TooltipProps, 'content' | 'shortcut'>>;
+  tooltipShortcutClassName?: string;
 }
 
 export interface ResizePanelProps
@@ -29,6 +34,12 @@ export interface ResizePanelProps
   resizeHandlePos: 'left' | 'right';
   resizeHandleOffset?: number;
   resizeHandleVerticalPadding?: number;
+  resizeHandleTooltip?: TooltipProps['content'];
+  resizeHandleTooltipShortcut?: TooltipProps['shortcut'];
+  resizeHandleTooltipShortcutClassName?: string;
+  resizeHandleTooltipOptions?: Partial<
+    Omit<TooltipProps, 'content' | 'shortcut'>
+  >;
   enableAnimation?: boolean;
   width: number;
   unmountOnExit?: boolean;
@@ -49,6 +60,10 @@ const ResizeHandle = ({
   onOpen,
   onResizing,
   onWidthChange,
+  tooltip,
+  tooltipShortcut,
+  tooltipOptions,
+  tooltipShortcutClassName,
   ...rest
 }: ResizeHandleProps) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -101,24 +116,31 @@ const ResizeHandle = ({
   );
 
   return (
-    <div
-      {...rest}
-      data-testid="resize-handle"
-      ref={ref}
-      style={assignInlineVars({
-        [styles.resizeHandleOffsetVar]: `${resizeHandleOffset ?? 0}px`,
-        [styles.resizeHandleVerticalPadding]: `${
-          resizeHandleVerticalPadding ?? 0
-        }px`,
-      })}
-      className={clsx(styles.resizeHandleContainer, className)}
-      data-handle-position={resizeHandlePos}
-      data-resizing={resizing}
-      data-open={open}
-      onMouseDown={onResizeStart}
+    <Tooltip
+      content={tooltip}
+      shortcut={tooltipShortcut}
+      shortcutClassName={tooltipShortcutClassName}
+      {...tooltipOptions}
     >
-      <div className={styles.resizerInner} />
-    </div>
+      <div
+        {...rest}
+        data-testid="resize-handle"
+        ref={ref}
+        style={assignInlineVars({
+          [styles.resizeHandleOffsetVar]: `${resizeHandleOffset ?? 0}px`,
+          [styles.resizeHandleVerticalPadding]: `${
+            resizeHandleVerticalPadding ?? 0
+          }px`,
+        })}
+        className={clsx(styles.resizeHandleContainer, className)}
+        data-handle-position={resizeHandlePos}
+        data-resizing={resizing}
+        data-open={open}
+        onMouseDown={onResizeStart}
+      >
+        <div className={styles.resizerInner} />
+      </div>
+    </Tooltip>
   );
 };
 
@@ -143,6 +165,10 @@ export const ResizePanel = forwardRef<HTMLDivElement, ResizePanelProps>(
       resizeHandlePos,
       resizeHandleOffset,
       resizeHandleVerticalPadding,
+      resizeHandleTooltip,
+      resizeHandleTooltipShortcut,
+      resizeHandleTooltipShortcutClassName,
+      resizeHandleTooltipOptions,
       ...rest
     },
     ref
@@ -169,11 +195,17 @@ export const ResizePanel = forwardRef<HTMLDivElement, ResizePanelProps>(
         data-handle-position={resizeHandlePos}
         data-enable-animation={enableAnimation && !resizing}
       >
-        {!(status === 'exited' && unmountOnExit !== false) && children}
+        <div className={styles.content}>
+          {!(status === 'exited' && unmountOnExit !== false) && children}
+        </div>
         <ResizeHandle
           resizeHandlePos={resizeHandlePos}
           resizeHandleOffset={resizeHandleOffset}
           resizeHandleVerticalPadding={resizeHandleVerticalPadding}
+          tooltip={resizeHandleTooltip}
+          tooltipOptions={resizeHandleTooltipOptions}
+          tooltipShortcut={resizeHandleTooltipShortcut}
+          tooltipShortcutClassName={resizeHandleTooltipShortcutClassName}
           maxWidth={maxWidth}
           minWidth={minWidth}
           onOpen={onOpen}

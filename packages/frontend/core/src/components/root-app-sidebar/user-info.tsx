@@ -8,11 +8,8 @@ import {
   type MenuProps,
   Skeleton,
 } from '@affine/component';
-import {
-  authAtom,
-  openSettingModalAtom,
-  openSignOutModalAtom,
-} from '@affine/core/components/atoms';
+import { authAtom } from '@affine/core/components/atoms';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { AccountIcon, SignOutIcon } from '@blocksuite/icons/rc';
@@ -32,6 +29,7 @@ import {
   UserQuotaService,
 } from '../../modules/cloud';
 import { UserPlanButton } from '../affine/auth/user-plan-button';
+import { useSignOut } from '../hooks/affine/use-sign-out';
 import * as styles from './index.css';
 import { UnknownUserIcon } from './unknow-user';
 
@@ -78,21 +76,15 @@ const UnauthorizedUserInfo = () => {
 };
 
 const AccountMenu = () => {
-  const setSettingModalAtom = useSetAtom(openSettingModalAtom);
-  const setOpenSignOutModalAtom = useSetAtom(openSignOutModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
+  const openSignOutModal = useSignOut();
 
   const onOpenAccountSetting = useCallback(() => {
     track.$.navigationPanel.profileAndBadge.openSettings({ to: 'account' });
-    setSettingModalAtom(prev => ({
-      ...prev,
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'account',
-    }));
-  }, [setSettingModalAtom]);
-
-  const onOpenSignOutModal = useCallback(() => {
-    setOpenSignOutModalAtom(true);
-  }, [setOpenSignOutModalAtom]);
+    });
+  }, [globalDialogService]);
 
   const t = useI18n();
 
@@ -108,7 +100,7 @@ const AccountMenu = () => {
       <MenuItem
         prefixIcon={<SignOutIcon />}
         data-testid="workspace-modal-sign-out-option"
-        onClick={onOpenSignOutModal}
+        onClick={openSignOutModal}
       >
         {t['com.affine.workspace.cloud.account.logout']()}
       </MenuItem>
@@ -193,22 +185,20 @@ const AIUsage = () => {
   const loading = copilotActionLimit === null || copilotActionUsed === null;
   const loadError = useLiveData(copilotQuotaService.copilotQuota.error$);
 
-  const setSettingModalAtom = useSetAtom(openSettingModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
 
   const goToAIPlanPage = useCallback(() => {
-    setSettingModalAtom({
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'plans',
       scrollAnchor: 'aiPricingPlan',
     });
-  }, [setSettingModalAtom]);
+  }, [globalDialogService]);
 
   const goToAccountSetting = useCallback(() => {
-    setSettingModalAtom({
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'account',
     });
-  }, [setSettingModalAtom]);
+  }, [globalDialogService]);
 
   if (loading) {
     if (loadError) console.error(loadError);

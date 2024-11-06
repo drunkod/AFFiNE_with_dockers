@@ -6,6 +6,7 @@ export const root = style({
   height: '100%',
   overflow: 'hidden',
   width: '100%',
+  flexDirection: 'column',
 });
 
 export const mainContainer = style({

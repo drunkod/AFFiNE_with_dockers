@@ -36,7 +36,7 @@ export class DocsIndexer extends Entity {
   /**
    * increase this number to re-index all docs
    */
-  static INDEXER_VERSION = 2;
+  static INDEXER_VERSION = 6;
 
   private readonly jobQueue: JobQueue<IndexerJobPayload> =
     new IndexedDBJobQueue<IndexerJobPayload>(
@@ -139,19 +139,7 @@ export class DocsIndexer extends Entity {
         return;
       }
 
-      const allIndexedDocs = (
-        await this.docIndex.search(
-          {
-            type: 'all',
-          },
-          {
-            pagination: {
-              limit: Number.MAX_SAFE_INTEGER,
-              skip: 0,
-            },
-          }
-        )
-      ).nodes.map(n => n.id);
+      const allIndexedDocs = (await this.docIndex.getAll()).map(d => d.id);
 
       workerOutput = await worker.run({
         type: 'rootDoc',

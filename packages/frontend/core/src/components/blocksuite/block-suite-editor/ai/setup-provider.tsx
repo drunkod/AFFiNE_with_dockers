@@ -1,12 +1,11 @@
 import { AIProvider } from '@affine/core/blocksuite/presets/ai';
 import { toggleGeneralAIOnboarding } from '@affine/core/components/affine/ai-onboarding/apis';
-import { authAtom, openSettingModalAtom } from '@affine/core/components/atoms';
+import { authAtom } from '@affine/core/components/atoms';
 import {
   getBaseUrl,
   type getCopilotHistoriesQuery,
   type RequestOptions,
 } from '@affine/graphql';
-import { track } from '@affine/track';
 import { UnauthorizedError } from '@blocksuite/affine/blocks';
 import { assertExists } from '@blocksuite/affine/global/utils';
 import { getCurrentStore } from '@toeverything/infra';
@@ -461,14 +460,6 @@ Could you make a new website based on these notes and send back just the html fi
 
   AIProvider.provide('forkChat', options => {
     return forkCopilotSession(options);
-  });
-
-  AIProvider.slots.requestUpgradePlan.on(() => {
-    getCurrentStore().set(openSettingModalAtom, {
-      activeTab: 'billing',
-      open: true,
-    });
-    track.$.paywall.aiAction.viewPlans();
   });
 
   AIProvider.slots.requestLogin.on(() => {

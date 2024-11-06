@@ -46,7 +46,9 @@ type DocEvents =
   | 'openDocOptionsMenu'
   | 'openDocInfo'
   | 'copyBlockToLink'
-  | 'bookmark';
+  | 'bookmark'
+  | 'editProperty'
+  | 'addProperty';
 type EditorEvents = 'bold' | 'italic' | 'underline' | 'strikeThrough';
 // END SECTION
 
@@ -121,7 +123,6 @@ type UserEvents =
   | AuthEvents
   | AccountEvents
   | PaymentEvents;
-
 interface PageDivision {
   [page: string]: {
     [segment: string]: {
@@ -149,10 +150,12 @@ const PageEvents = {
     },
     docInfoPanel: {
       $: ['open'],
+      property: ['editProperty', 'addProperty'],
+      databaseProperty: ['editProperty'],
     },
     settingsPanel: {
       menu: ['openSettings'],
-      workspace: ['viewPlans'],
+      workspace: ['viewPlans', 'export', 'addProperty'],
       profileAndBadge: ['viewPlans'],
       accountUsage: ['viewPlans'],
       accountSettings: ['uploadAvatar', 'removeAvatar', 'updateUserName'],
@@ -214,7 +217,8 @@ const PageEvents = {
         'openChangelog',
         'dismissChangelog',
       ],
-      others: ['navigate', 'import'],
+      others: ['navigate'],
+      importModal: ['open'],
       workspaceList: [
         'open',
         'signIn',
@@ -230,6 +234,9 @@ const PageEvents = {
     },
     docHistory: {
       $: ['open', 'close', 'switchPageMode', 'viewPlans'],
+    },
+    importModal: {
+      $: ['open', 'import'],
     },
     paywall: {
       storage: ['viewPlans'],
@@ -259,6 +266,8 @@ const PageEvents = {
       ],
       history: ['open'],
       pageInfo: ['open'],
+      importModal: ['open'],
+      snapshot: ['import', 'export'],
     },
   },
   doc: {
@@ -272,6 +281,11 @@ const PageEvents = {
     },
     inlineDocInfo: {
       $: ['toggle'],
+      property: ['editProperty', 'addProperty'],
+      databaseProperty: ['editProperty'],
+    },
+    sidepanel: {
+      property: ['addProperty'],
     },
   },
   // remove when type added
@@ -354,6 +368,16 @@ type AuthArgs = {
   provider?: string;
 };
 
+type ImportStatus = 'importing' | 'failed' | 'success';
+type ImportArgs = {
+  type: string;
+  status?: ImportStatus;
+  error?: string;
+  result?: {
+    docCount: number;
+  };
+};
+
 export type EventArgs = {
   createWorkspace: { flavour: string };
   signIn: AuthArgs;
@@ -386,16 +410,20 @@ export type EventArgs = {
     action: TabActionType;
   };
   toggleFavorite: OrganizeItemArgs & { on: boolean };
+  toggle: { type: 'collapse' | 'expand' };
   createDoc: { mode?: 'edgeless' | 'page' };
   switchPageMode: { mode: 'edgeless' | 'page' };
   createShareLink: { mode: 'edgeless' | 'page' };
   copyShareLink: {
     type: 'default' | 'doc' | 'whiteboard' | 'block' | 'element';
   };
+  import: ImportArgs;
   export: { type: string };
   copyBlockToLink: {
     type: string;
   };
+  editProperty: { type: string };
+  addProperty: { type: string; control: 'at menu' | 'property list' };
 };
 
 // for type checking

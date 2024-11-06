@@ -1,12 +1,11 @@
-import { AffineContext } from '@affine/component/context';
-import { GlobalLoading } from '@affine/component/global-loading';
-import { AppFallback } from '@affine/core/components/affine/app-container';
-import { Telemetry } from '@affine/core/components/telemetry';
+import { AffineContext } from '@affine/core/components/context';
+import { AppContainer } from '@affine/core/desktop/components/app-container';
 import { router } from '@affine/core/desktop/router';
 import { configureCommonModules } from '@affine/core/modules';
 import { I18nProvider } from '@affine/core/modules/i18n';
+import { OpenInAppGuard } from '@affine/core/modules/open-in-app';
 import { configureLocalStorageStateStorageImpls } from '@affine/core/modules/storage';
-import { CustomThemeModifier } from '@affine/core/modules/theme-editor';
+import { PopupWindowProvider } from '@affine/core/modules/url';
 import { configureIndexedDBUserspaceStorageProvider } from '@affine/core/modules/userspace';
 import { configureBrowserWorkbenchModule } from '@affine/core/modules/workbench';
 import {
@@ -37,6 +36,25 @@ configureLocalStorageStateStorageImpls(framework);
 configureBrowserWorkspaceFlavours(framework);
 configureIndexedDBWorkspaceEngineStorageProvider(framework);
 configureIndexedDBUserspaceStorageProvider(framework);
+framework.impl(PopupWindowProvider, {
+  open: (target: string) => {
+    const targetUrl = new URL(target);
+
+    let url: string;
+    // safe to open directly if in the same origin
+    if (targetUrl.origin === location.origin) {
+      url = target;
+    } else {
+      const redirectProxy = location.origin + '/redirect-proxy';
+      const search = new URLSearchParams({
+        redirect_uri: target,
+      });
+
+      url = `${redirectProxy}?${search.toString()}`;
+    }
+    window.open(url, '_blank', 'noreferrer noopener');
+  },
+});
 const frameworkProvider = framework.provider();
 
 // setup application lifecycle events, and emit application start event
@@ -52,14 +70,13 @@ export function App() {
         <CacheProvider value={cache}>
           <I18nProvider>
             <AffineContext store={getCurrentStore()}>
-              <Telemetry />
-              <CustomThemeModifier />
-              <GlobalLoading />
-              <RouterProvider
-                fallbackElement={<AppFallback key="RouterFallback" />}
-                router={router}
-                future={future}
-              />
+              <OpenInAppGuard>
+                <RouterProvider
+                  fallbackElement={<AppContainer fallback />}
+                  router={router}
+                  future={future}
+                />
+              </OpenInAppGuard>
             </AffineContext>
           </I18nProvider>
         </CacheProvider>

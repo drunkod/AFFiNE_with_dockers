@@ -1,21 +1,22 @@
 import {
   Button,
-  IconButton,
   Menu,
-  MenuItem,
-  PropertyCollapsible,
+  PropertyCollapsibleContent,
+  PropertyCollapsibleSection,
   PropertyName,
   PropertyRoot,
-  Tooltip,
   useDraggable,
   useDropTarget,
 } from '@affine/component';
-import { DocLinksService } from '@affine/core/modules/doc-link';
-import { EditorSettingService } from '@affine/core/modules/editor-settting';
+import { DocDatabaseBacklinkInfo } from '@affine/core/modules/doc-info';
+import type {
+  DatabaseRow,
+  DatabaseValueCell,
+} from '@affine/core/modules/doc-info/types';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { ViewService } from '@affine/core/modules/workbench/services/view';
 import type { AffineDNDData } from '@affine/core/types/dnd';
-import { i18nTime, useI18n } from '@affine/i18n';
+import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { PlusIcon, PropertyIcon, ToggleExpandIcon } from '@blocksuite/icons/rc';
 import * as Collapsible from '@radix-ui/react-collapsible';
@@ -25,54 +26,38 @@ import {
   DocsService,
   useLiveData,
   useService,
-  useServices,
-  WorkspaceService,
+  useServiceOptional,
 } from '@toeverything/infra';
 import clsx from 'clsx';
-import { useDebouncedValue } from 'foxact/use-debounced-value';
 import type React from 'react';
-import type { HTMLProps, PropsWithChildren } from 'react';
-import { forwardRef, useCallback, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 
-import { AffinePageReference } from '../affine/reference-link';
 import { DocPropertyIcon } from './icons/doc-property-icon';
 import { CreatePropertyMenuItems } from './menu/create-doc-property';
 import { EditDocPropertyMenuItems } from './menu/edit-doc-property';
 import * as styles from './table.css';
 import { DocPropertyTypes, isSupportedDocPropertyType } from './types/constant';
 
-type DocBacklinksPopupProps = PropsWithChildren<{
-  backlinks: { docId: string; blockId: string; title: string }[];
-}>;
+export type DefaultOpenProperty =
+  | {
+      type: 'workspace';
+    }
+  | {
+      type: 'database';
+      databaseId: string;
+      databaseRowId: string;
+    };
 
-export const DocBacklinksPopup = ({
-  backlinks,
-  children,
-}: DocBacklinksPopupProps) => {
-  return (
-    <Menu
-      contentOptions={{
-        className: styles.backLinksMenu,
-        onClick(e) {
-          e.stopPropagation();
-        },
-      }}
-      items={
-        <div className={styles.backlinksList}>
-          {backlinks.map(link => (
-            <AffinePageReference
-              key={link.docId + ':' + link.blockId}
-              wrapper={MenuItem}
-              pageId={link.docId}
-            />
-          ))}
-        </div>
-      }
-    >
-      {children}
-    </Menu>
-  );
-};
+export interface DocPropertiesTableProps {
+  defaultOpenProperty?: DefaultOpenProperty;
+  onPropertyAdded?: (property: DocCustomPropertyInfo) => void;
+  onPropertyChange?: (property: DocCustomPropertyInfo, value: unknown) => void;
+  onDatabasePropertyChange?: (
+    row: DatabaseRow,
+    cell: DatabaseValueCell,
+    value: unknown
+  ) => void;
+}
 
 interface DocPropertiesTableHeaderProps {
   className?: string;
@@ -81,142 +66,38 @@ interface DocPropertiesTableHeaderProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// backlinks - #no                Updated yyyy-mm-dd
+// Info
 // ─────────────────────────────────────────────────
-// Page Info ...
 export const DocPropertiesTableHeader = ({
   className,
   style,
   open,
   onOpenChange,
 }: DocPropertiesTableHeaderProps) => {
-  const t = useI18n();
-  const {
-    docLinksService,
-    docService,
-    workspaceService,
-    editorSettingService,
-  } = useServices({
-    DocLinksService,
-    DocService,
-    WorkspaceService,
-    EditorSettingService,
-  });
-  const docBacklinks = docLinksService.backlinks;
-  const backlinks = useLiveData(docBacklinks.backlinks$);
-
-  const displayDocInfo = useLiveData(
-    editorSettingService.editorSetting.settings$.selector(s => s.displayDocInfo)
-  );
-
-  const { syncing, retrying, serverClock } = useLiveData(
-    workspaceService.workspace.engine.doc.docState$(docService.doc.id)
-  );
-
-  const { createDate, updatedDate } = useLiveData(
-    docService.doc.meta$.selector(m => ({
-      createDate: m.createDate,
-      updatedDate: m.updatedDate,
-    }))
-  );
-
-  const timestampElement = useMemo(() => {
-    const localizedCreateTime = createDate ? i18nTime(createDate) : null;
-
-    const createTimeElement = (
-      <div className={styles.tableHeaderTimestamp}>
-        {t['Created']()} {localizedCreateTime}
-      </div>
-    );
-
-    return serverClock ? (
-      <Tooltip
-        side="right"
-        content={
-          <>
-            <div className={styles.tableHeaderTimestamp}>
-              {t['Updated']()} {i18nTime(serverClock)}
-            </div>
-            {createDate && (
-              <div className={styles.tableHeaderTimestamp}>
-                {t['Created']()} {i18nTime(createDate)}
-              </div>
-            )}
-          </>
-        }
-      >
-        <div className={styles.tableHeaderTimestamp}>
-          {!syncing && !retrying ? (
-            <>
-              {t['Updated']()}{' '}
-              {i18nTime(serverClock, {
-                relative: {
-                  max: [1, 'day'],
-                  accuracy: 'minute',
-                },
-                absolute: {
-                  accuracy: 'day',
-                },
-              })}
-            </>
-          ) : (
-            <>{t['com.affine.syncing']()}</>
-          )}
-        </div>
-      </Tooltip>
-    ) : updatedDate ? (
-      <Tooltip side="right" content={createTimeElement}>
-        <div className={styles.tableHeaderTimestamp}>
-          {t['Updated']()} {i18nTime(updatedDate)}
-        </div>
-      </Tooltip>
-    ) : (
-      createTimeElement
-    );
-  }, [createDate, updatedDate, retrying, serverClock, syncing, t]);
-
-  const dTimestampElement = useDebouncedValue(timestampElement, 500);
-
   const handleCollapse = useCallback(() => {
     track.doc.inlineDocInfo.$.toggle();
     onOpenChange(!open);
   }, [onOpenChange, open]);
-
+  const t = useI18n();
   return (
-    <div className={clsx(styles.tableHeader, className)} style={style}>
-      {/* TODO(@Peng): add click handler to backlinks */}
-      <div className={styles.tableHeaderInfoRow}>
-        {backlinks.length > 0 ? (
-          <DocBacklinksPopup backlinks={backlinks}>
-            <div className={styles.tableHeaderBacklinksHint}>
-              {t['com.affine.page-properties.backlinks']()} · {backlinks.length}
-            </div>
-          </DocBacklinksPopup>
-        ) : null}
-        {dTimestampElement}
-      </div>
-      <div className={styles.tableHeaderDivider} />
-      {displayDocInfo ? (
-        <div className={styles.tableHeaderSecondaryRow}>
-          <div className={clsx(!open ? styles.pageInfoDimmed : null)}>
-            {t['com.affine.page-properties.page-info']()}
-          </div>
-          <Collapsible.Trigger asChild role="button" onClick={handleCollapse}>
-            <div
-              className={styles.tableHeaderCollapseButtonWrapper}
-              data-testid="page-info-collapse"
-            >
-              <IconButton size="20">
-                <ToggleExpandIcon
-                  className={styles.collapsedIcon}
-                  data-collapsed={!open}
-                />
-              </IconButton>
-            </div>
-          </Collapsible.Trigger>
+    <Collapsible.Trigger style={style} role="button" onClick={handleCollapse}>
+      <div className={clsx(styles.tableHeader, className)}>
+        <div className={clsx(!open ? styles.pageInfoDimmed : null)}>
+          {t['com.affine.page-properties.page-info']()}
         </div>
-      ) : null}
-    </div>
+        <div
+          className={styles.tableHeaderCollapseButtonWrapper}
+          data-testid="page-info-collapse"
+        >
+          <ToggleExpandIcon
+            className={styles.collapsedIcon}
+            data-collapsed={!open}
+          />
+        </div>
+      </div>
+
+      <div className={styles.tableHeaderDivider} />
+    </Collapsible.Trigger>
   );
 };
 
@@ -224,11 +105,13 @@ interface DocPropertyRowProps {
   propertyInfo: DocCustomPropertyInfo;
   showAll?: boolean;
   defaultOpenEditMenu?: boolean;
+  onChange?: (value: unknown) => void;
 }
 
 export const DocPropertyRow = ({
   propertyInfo,
   defaultOpenEditMenu,
+  onChange,
 }: DocPropertyRowProps) => {
   const t = useI18n();
   const docService = useService(DocService);
@@ -252,8 +135,9 @@ export const DocPropertyRow = ({
         throw new Error('only allow string value');
       }
       docService.doc.record.setCustomProperty(propertyInfo.id, value);
+      onChange?.(value);
     },
-    [docService, propertyInfo]
+    [docService, onChange, propertyInfo]
   );
 
   const docId = docService.doc.id;
@@ -339,111 +223,136 @@ export const DocPropertyRow = ({
   );
 };
 
-interface DocPropertiesTableBodyProps {
+interface DocWorkspacePropertiesTableBodyProps {
   className?: string;
   style?: React.CSSProperties;
+  defaultOpen?: boolean;
+  onChange?: (property: DocCustomPropertyInfo, value: unknown) => void;
+  onPropertyAdded?: (property: DocCustomPropertyInfo) => void;
 }
 
 // 🏷️ Tags     (⋅ xxx) (⋅ yyy)
 // #️⃣ Number   123456
 // +  Add a property
-export const DocPropertiesTableBody = forwardRef<
+const DocWorkspacePropertiesTableBody = forwardRef<
   HTMLDivElement,
-  DocPropertiesTableBodyProps & HTMLProps<HTMLDivElement>
->(({ className, style, ...props }, ref) => {
-  const t = useI18n();
-  const docsService = useService(DocsService);
-  const workbenchService = useService(WorkbenchService);
-  const viewService = useService(ViewService);
-  const properties = useLiveData(docsService.propertyList.sortedProperties$);
-  const [propertyCollapsed, setPropertyCollapsed] = useState(true);
+  DocWorkspacePropertiesTableBodyProps
+>(
+  (
+    { className, style, defaultOpen, onChange, onPropertyAdded, ...props },
+    ref
+  ) => {
+    const t = useI18n();
+    const docsService = useService(DocsService);
+    const workbenchService = useService(WorkbenchService);
+    const viewService = useServiceOptional(ViewService);
+    const properties = useLiveData(docsService.propertyList.sortedProperties$);
+    const [propertyCollapsed, setPropertyCollapsed] = useState(true);
 
-  const [newPropertyId, setNewPropertyId] = useState<string | null>(null);
+    const [newPropertyId, setNewPropertyId] = useState<string | null>(null);
 
-  return (
-    <div
-      ref={ref}
-      className={clsx(styles.tableBodyRoot, className)}
-      style={style}
-      {...props}
-    >
-      <PropertyCollapsible
-        collapsible
-        collapsed={propertyCollapsed}
-        onCollapseChange={setPropertyCollapsed}
-        className={styles.tableBodySortable}
-        collapseButtonText={({ hide, isCollapsed }) =>
-          isCollapsed
-            ? hide === 1
-              ? t['com.affine.page-properties.more-property.one']({
-                  count: hide.toString(),
-                })
-              : t['com.affine.page-properties.more-property.more']({
-                  count: hide.toString(),
-                })
-            : hide === 1
-              ? t['com.affine.page-properties.hide-property.one']({
-                  count: hide.toString(),
-                })
-              : t['com.affine.page-properties.hide-property.more']({
-                  count: hide.toString(),
-                })
-        }
+    const handlePropertyAdded = useCallback(
+      (property: DocCustomPropertyInfo) => {
+        setNewPropertyId(property.id);
+        onPropertyAdded?.(property);
+      },
+      [onPropertyAdded]
+    );
+
+    return (
+      <PropertyCollapsibleSection
+        ref={ref}
+        className={clsx(styles.tableBodyRoot, className)}
+        style={style}
+        title={t.t('com.affine.workspace.properties')}
+        defaultCollapsed={!defaultOpen}
+        {...props}
       >
-        {properties.map(property => (
-          <DocPropertyRow
-            key={property.id}
-            propertyInfo={property}
-            defaultOpenEditMenu={newPropertyId === property.id}
-          />
-        ))}
-        <div className={styles.actionContainer}>
-          <Menu
-            items={
-              <CreatePropertyMenuItems
-                at="after"
-                onCreated={setNewPropertyId}
-              />
-            }
-            contentOptions={{
-              onClick(e) {
-                e.stopPropagation();
-              },
-            }}
-          >
-            <Button
-              variant="plain"
-              prefix={<PlusIcon />}
-              className={styles.propertyActionButton}
-              data-testid="add-property-button"
+        <PropertyCollapsibleContent
+          collapsible
+          collapsed={propertyCollapsed}
+          onCollapseChange={setPropertyCollapsed}
+          className={styles.tableBodySortable}
+          collapseButtonText={({ hide, isCollapsed }) =>
+            isCollapsed
+              ? hide === 1
+                ? t['com.affine.page-properties.more-property.one']({
+                    count: hide.toString(),
+                  })
+                : t['com.affine.page-properties.more-property.more']({
+                    count: hide.toString(),
+                  })
+              : hide === 1
+                ? t['com.affine.page-properties.hide-property.one']({
+                    count: hide.toString(),
+                  })
+                : t['com.affine.page-properties.hide-property.more']({
+                    count: hide.toString(),
+                  })
+          }
+        >
+          {properties.map(property => (
+            <DocPropertyRow
+              key={property.id}
+              propertyInfo={property}
+              defaultOpenEditMenu={newPropertyId === property.id}
+              onChange={value => onChange?.(property, value)}
+            />
+          ))}
+          <div className={styles.actionContainer}>
+            <Menu
+              items={
+                <CreatePropertyMenuItems
+                  at="after"
+                  onCreated={handlePropertyAdded}
+                />
+              }
+              contentOptions={{
+                onClick(e) {
+                  e.stopPropagation();
+                },
+              }}
             >
-              {t['com.affine.page-properties.add-property']()}
-            </Button>
-          </Menu>
-          <Button
-            variant="plain"
-            prefix={<PropertyIcon />}
-            className={clsx(
-              styles.propertyActionButton,
-              styles.propertyConfigButton
-            )}
-            onClick={() => {
-              viewService.view.activeSidebarTab('properties');
-              workbenchService.workbench.openSidebar();
-            }}
-          >
-            {t['com.affine.page-properties.config-properties']()}
-          </Button>
-        </div>
-      </PropertyCollapsible>
-      <div className={styles.tableHeaderDivider} />
-    </div>
-  );
-});
-DocPropertiesTableBody.displayName = 'PagePropertiesTableBody';
+              <Button
+                variant="plain"
+                prefix={<PlusIcon />}
+                className={styles.propertyActionButton}
+                data-testid="add-property-button"
+              >
+                {t['com.affine.page-properties.add-property']()}
+              </Button>
+            </Menu>
+            {viewService ? (
+              <Button
+                variant="plain"
+                prefix={<PropertyIcon />}
+                className={clsx(
+                  styles.propertyActionButton,
+                  styles.propertyConfigButton
+                )}
+                onClick={() => {
+                  viewService.view.activeSidebarTab('properties');
+                  workbenchService.workbench.openSidebar();
+                }}
+              >
+                {t['com.affine.page-properties.config-properties']()}
+              </Button>
+            ) : null}
+          </div>
+        </PropertyCollapsibleContent>
+      </PropertyCollapsibleSection>
+    );
+  }
+);
+DocWorkspacePropertiesTableBody.displayName = 'PagePropertiesTableBody';
 
-const DocPropertiesTableInner = () => {
-  const [expanded, setExpanded] = useState(false);
+const DocPropertiesTableInner = ({
+  defaultOpenProperty,
+  onPropertyAdded,
+  onPropertyChange,
+  onDatabasePropertyChange,
+}: DocPropertiesTableProps) => {
+  const [expanded, setExpanded] = useState(!!defaultOpenProperty);
   return (
     <div className={styles.root}>
       <Collapsible.Root
@@ -452,8 +361,28 @@ const DocPropertiesTableInner = () => {
         className={styles.rootCentered}
       >
         <DocPropertiesTableHeader open={expanded} onOpenChange={setExpanded} />
-        <Collapsible.Content asChild>
-          <DocPropertiesTableBody />
+        <Collapsible.Content>
+          <DocWorkspacePropertiesTableBody
+            defaultOpen={
+              !defaultOpenProperty || defaultOpenProperty.type === 'workspace'
+            }
+            onPropertyAdded={onPropertyAdded}
+            onChange={onPropertyChange}
+          />
+          <div className={styles.tableHeaderDivider} />
+          <DocDatabaseBacklinkInfo
+            onChange={onDatabasePropertyChange}
+            defaultOpen={
+              defaultOpenProperty?.type === 'database'
+                ? [
+                    {
+                      databaseId: defaultOpenProperty.databaseId,
+                      rowId: defaultOpenProperty.databaseRowId,
+                    },
+                  ]
+                : []
+            }
+          />
         </Collapsible.Content>
       </Collapsible.Root>
     </div>
@@ -462,6 +391,6 @@ const DocPropertiesTableInner = () => {
 
 // this is the main component that renders the page properties table at the top of the page below
 // the page title
-export const DocPropertiesTable = () => {
-  return <DocPropertiesTableInner />;
+export const DocPropertiesTable = (props: DocPropertiesTableProps) => {
+  return <DocPropertiesTableInner {...props} />;
 };

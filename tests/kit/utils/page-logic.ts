@@ -1,6 +1,24 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+export function getAllPage(page: Page) {
+  const newPageButton = page.getByTestId('new-page-button-trigger');
+  const newPageDropdown = newPageButton.locator('svg');
+  const edgelessBlockCard = page.getByTestId('new-edgeless-button-in-all-page');
+
+  async function clickNewPageButton() {
+    const newPageButton = page.getByTestId('new-page-button-trigger');
+    return await newPageButton.click();
+  }
+
+  async function clickNewEdgelessDropdown() {
+    await newPageDropdown.click();
+    await edgelessBlockCard.click();
+  }
+
+  return { clickNewPageButton, clickNewEdgelessDropdown };
+}
+
 export async function waitForEditorLoad(page: Page) {
   await page.waitForSelector('v-line', {
     timeout: 20000,
@@ -133,4 +151,32 @@ export const focusInlineEditor = async (page: Page) => {
     )
     .locator('.inline-editor')
     .focus();
+};
+
+export const addDatabase = async (page: Page, title?: string) => {
+  await page.keyboard.press('/');
+  await expect(page.locator('affine-slash-menu .slash-menu')).toBeVisible();
+  await page.keyboard.type('database');
+  await page.getByTestId('Table View').click();
+
+  if (title) {
+    await page.locator('affine-database-title').click();
+    await page
+      .locator(
+        'affine-database-title textarea[data-block-is-database-title="true"]'
+      )
+      .fill(title);
+    await page
+      .locator(
+        'affine-database-title textarea[data-block-is-database-title="true"]'
+      )
+      .blur();
+  }
+};
+
+export const addDatabaseRow = async (page: Page, databaseTitle: string) => {
+  const db = page.locator(`affine-database-table`, {
+    has: page.locator(`affine-database-title:has-text("${databaseTitle}")`),
+  });
+  await db.locator('.data-view-table-group-add-row-button').click();
 };

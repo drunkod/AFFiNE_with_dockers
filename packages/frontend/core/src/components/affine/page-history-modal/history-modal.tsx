@@ -2,8 +2,8 @@ import { Loading, Scrollable } from '@affine/component';
 import { EditorLoading } from '@affine/component/page-detail-skeleton';
 import { Button, IconButton } from '@affine/component/ui/button';
 import { Modal, useConfirmModal } from '@affine/component/ui/modal';
-import { openSettingModalAtom } from '@affine/core/components/atoms';
 import { useDocCollectionPageTitle } from '@affine/core/components/hooks/use-block-suite-workspace-page-title';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { EditorService } from '@affine/core/modules/editor';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
 import { WorkspaceQuotaService } from '@affine/core/modules/quota';
@@ -18,7 +18,7 @@ import { CloseIcon, ToggleCollapseIcon } from '@blocksuite/icons/rc';
 import * as Collapsible from '@radix-ui/react-collapsible';
 import type { DialogContentProps } from '@radix-ui/react-dialog';
 import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
-import { atom, useAtom, useSetAtom } from 'jotai';
+import { atom, useAtom } from 'jotai';
 import type { PropsWithChildren } from 'react';
 import {
   Fragment,
@@ -188,21 +188,19 @@ const PlanPrompt = () => {
     permissionService.permission.revalidate();
   }, [permissionService]);
 
-  const setSettingModalAtom = useSetAtom(openSettingModalAtom);
   const [planPromptClosed, setPlanPromptClosed] = useAtom(planPromptClosedAtom);
-
+  const globalDialogService = useService(GlobalDialogService);
   const closeFreePlanPrompt = useCallback(() => {
     setPlanPromptClosed(true);
   }, [setPlanPromptClosed]);
 
   const onClickUpgrade = useCallback(() => {
-    setSettingModalAtom({
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'plans',
       scrollAnchor: 'cloudPricingPlan',
     });
     track.$.docHistory.$.viewPlans();
-  }, [setSettingModalAtom]);
+  }, [globalDialogService]);
 
   const t = useI18n();
 

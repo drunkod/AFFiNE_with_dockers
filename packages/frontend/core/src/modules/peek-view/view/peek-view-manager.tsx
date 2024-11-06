@@ -22,20 +22,15 @@ function renderPeekView({ info }: ActivePeekView) {
     return toReactNode(info.template);
   }
   if (info.type === 'doc') {
-    return (
-      <DocPeekPreview
-        mode={info.mode}
-        xywh={info.xywh}
-        docId={info.docId}
-        blockIds={info.blockIds}
-        elementIds={info.elementIds}
-      />
-    );
+    return <DocPeekPreview docRef={info.docRef} />;
   }
 
-  if (info.type === 'image') {
+  if (info.type === 'image' && info.docRef.blockIds?.[0]) {
     return (
-      <ImagePreviewPeekView docId={info.docId} blockId={info.blockIds[0]} />
+      <ImagePreviewPeekView
+        docId={info.docRef.docId}
+        blockId={info.docRef.blockIds?.[0]}
+      />
     );
   }
 
@@ -49,14 +44,7 @@ function renderPeekView({ info }: ActivePeekView) {
 
 const renderControls = ({ info }: ActivePeekView) => {
   if (info.type === 'doc') {
-    return (
-      <DocPeekViewControls
-        mode={info.mode}
-        docId={info.docId}
-        blockIds={info.blockIds}
-        elementIds={info.elementIds}
-      />
-    );
+    return <DocPeekViewControls docRef={info.docRef} />;
   }
 
   if (info.type === 'image') {
@@ -86,8 +74,8 @@ const getRendererProps = (
     children: preview,
     controls,
     target:
-      activePeekView?.target instanceof HTMLElement
-        ? activePeekView.target
+      activePeekView?.target.element instanceof HTMLElement
+        ? activePeekView.target.element
         : undefined,
     mode: getMode(activePeekView.info),
     dialogFrame: activePeekView.info.type !== 'image',
@@ -108,8 +96,8 @@ export const PeekViewManagerModal = () => {
 
   useEffect(() => {
     const subscription = peekViewEntity.show$.subscribe(() => {
-      if (activePeekView?.target instanceof BlockComponent) {
-        activePeekView.target.requestUpdate();
+      if (activePeekView?.target.element instanceof BlockComponent) {
+        activePeekView.target.element.requestUpdate();
       }
     });
 

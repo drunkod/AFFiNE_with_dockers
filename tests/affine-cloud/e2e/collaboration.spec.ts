@@ -119,10 +119,10 @@ test('can sync collections between different browser', async ({
   );
   await enableCloudWorkspace(page);
   await page.getByTestId('explorer-bar-add-collection-button').click();
-  const title = page.getByTestId('input-collection-title');
+  const title = page.getByTestId('prompt-modal-input');
   await title.isVisible();
   await title.fill('test collection');
-  await page.getByTestId('save-collection').click();
+  await page.getByTestId('prompt-modal-confirm').click();
 
   {
     const context = await browser.newContext();

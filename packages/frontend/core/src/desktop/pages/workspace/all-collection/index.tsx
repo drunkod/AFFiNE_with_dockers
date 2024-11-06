@@ -1,9 +1,9 @@
+import { usePromptModal } from '@affine/component';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
 import type { CollectionMeta } from '@affine/core/components/page-list';
 import {
   CollectionListHeader,
   createEmptyCollection,
-  useEditCollectionName,
   VirtualizedCollectionList,
 } from '@affine/core/components/page-list';
 import {
@@ -40,22 +40,38 @@ export const AllCollection = () => {
   }, [collections]);
 
   const navigateHelper = useNavigateHelper();
-  const { open } = useEditCollectionName({
-    title: t['com.affine.editCollection.createCollection'](),
-    showTips: true,
-  });
+  const { openPromptModal } = usePromptModal();
 
   const handleCreateCollection = useCallback(() => {
-    open('')
-      .then(name => {
+    openPromptModal({
+      title: t['com.affine.editCollection.saveCollection'](),
+      label: t['com.affine.editCollectionName.name'](),
+      inputOptions: {
+        placeholder: t['com.affine.editCollectionName.name.placeholder'](),
+      },
+      children: (
+        <div className={styles.createTips}>
+          {t['com.affine.editCollectionName.createTips']()}
+        </div>
+      ),
+      confirmText: t['com.affine.editCollection.save'](),
+      cancelText: t['com.affine.editCollection.button.cancel'](),
+      confirmButtonOptions: {
+        variant: 'primary',
+      },
+      onConfirm(name) {
         const id = nanoid();
         collectionService.addCollection(createEmptyCollection(id, { name }));
         navigateHelper.jumpToCollection(currentWorkspace.id, id);
-      })
-      .catch(err => {
-        console.error(err);
-      });
-  }, [collectionService, currentWorkspace, navigateHelper, open]);
+      },
+    });
+  }, [
+    collectionService,
+    currentWorkspace.id,
+    navigateHelper,
+    openPromptModal,
+    t,
+  ]);
 
   return (
     <>

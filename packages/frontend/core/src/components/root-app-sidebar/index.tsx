@@ -1,4 +1,3 @@
-import { openSettingModalAtom } from '@affine/core/components/atoms';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import {
   AddPageButton,
@@ -12,6 +11,7 @@ import {
   SidebarScrollableContainer,
 } from '@affine/core/modules/app-sidebar/views';
 import { ExternalMenuLinkItem } from '@affine/core/modules/app-sidebar/views/menu-item/external-menu-link-item';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import {
   ExplorerCollections,
   ExplorerFavorites,
@@ -21,30 +21,29 @@ import {
 import { ExplorerTags } from '@affine/core/modules/explorer/views/sections/tags';
 import { CMDKQuickSearchService } from '@affine/core/modules/quicksearch/services/cmdk';
 import { isNewTabTrigger } from '@affine/core/utils';
-import { apis, events } from '@affine/electron-api';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { Doc } from '@blocksuite/affine/store';
 import {
   AllDocsIcon,
   GithubIcon,
+  ImportIcon,
   JournalIcon,
   SettingsIcon,
 } from '@blocksuite/icons/rc';
 import type { Workspace } from '@toeverything/infra';
 import {
   useLiveData,
+  useService,
   useServices,
   WorkspaceService,
 } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
 import type { MouseEvent, ReactElement } from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
 import { WorkbenchService } from '../../modules/workbench';
 import { usePageHelper } from '../blocksuite/block-suite-page-list/utils';
 import { WorkspaceNavigator } from '../workspace-selector';
-import ImportPage from './import-page';
 import {
   quickSearch,
   quickSearchAndNewPage,
@@ -83,8 +82,8 @@ export const RootAppSidebar = (): ReactElement => {
       CMDKQuickSearchService,
     });
   const currentWorkspace = workspaceService.workspace;
-  const docCollection = currentWorkspace.docCollection;
   const t = useI18n();
+  const globalDialogService = useService(GlobalDialogService);
   const workbench = workbenchService.workbench;
   const currentPath = useLiveData(
     workbench.location$.map(location => location.pathname)
@@ -105,34 +104,17 @@ export const RootAppSidebar = (): ReactElement => {
     [pageHelper]
   );
 
-  useEffect(() => {
-    if (BUILD_CONFIG.isElectron) {
-      return events?.applicationMenu.onNewPageAction(() => {
-        apis?.ui
-          .isActiveTab()
-          .then(isActive => {
-            if (!isActive) {
-              return;
-            }
-            onClickNewPage();
-          })
-          .catch(err => {
-            console.error(err);
-          });
-      });
-    }
-    return;
-  }, [onClickNewPage]);
-
-  const setOpenSettingModalAtom = useSetAtom(openSettingModalAtom);
-
   const onOpenSettingModal = useCallback(() => {
-    setOpenSettingModalAtom({
+    globalDialogService.open('setting', {
       activeTab: 'appearance',
-      open: true,
     });
     track.$.navigationPanel.$.openSettings();
-  }, [setOpenSettingModalAtom]);
+  }, [globalDialogService]);
+
+  const onOpenImportModal = useCallback(() => {
+    track.$.navigationPanel.importModal.open();
+    globalDialogService.open('import', undefined);
+  }, [globalDialogService]);
 
   return (
     <AppSidebar>
@@ -161,9 +143,7 @@ export const RootAppSidebar = (): ReactElement => {
             {t['com.affine.workspaceSubPath.all']()}
           </span>
         </MenuLinkItem>
-        <AppSidebarJournalButton
-          docCollection={currentWorkspace.docCollection}
-        />
+        <AppSidebarJournalButton />
         <MenuItem
           data-testid="slider-bar-workspace-setting-button"
           icon={<SettingsIcon />}
@@ -183,7 +163,13 @@ export const RootAppSidebar = (): ReactElement => {
         <CategoryDivider label={t['com.affine.rootAppSidebar.others']()} />
         <div style={{ padding: '0 8px' }}>
           <TrashButton />
-          <ImportPage docCollection={docCollection} />
+          <MenuItem
+            data-testid="slider-bar-import-button"
+            icon={<ImportIcon />}
+            onClick={onOpenImportModal}
+          >
+            <span data-testid="import-modal-trigger">{t['Import']()}</span>
+          </MenuItem>
           <ExternalMenuLinkItem
             href="https://affine.pro/blog?tag=Release+Note"
             icon={<JournalIcon />}

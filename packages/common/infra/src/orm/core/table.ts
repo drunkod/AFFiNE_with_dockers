@@ -160,11 +160,11 @@ export class Table<T extends TableSchemaBuilder> {
 
         if (inputVal === undefined) {
           if (schema.optional) {
-            acc[key] = null;
+            acc[key] = undefined;
           }
 
           if (schema.default) {
-            acc[key] = schema.default() ?? null;
+            acc[key] = schema.default() ?? undefined;
           }
         }
 

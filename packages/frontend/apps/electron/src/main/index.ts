@@ -47,7 +47,9 @@ if (process.env.SKIP_ONBOARDING) {
  */
 const isSingleInstance = app.requestSingleInstanceLock();
 if (!isSingleInstance) {
-  logger.info('Another instance is running, exiting...');
+  logger.info(
+    'Another instance is running or responding deep link, exiting...'
+  );
   app.quit();
   process.exit(0);
 }

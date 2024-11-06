@@ -16,8 +16,10 @@
     "@affine/i18n": "workspace:*",
     "@affine/templates": "workspace:*",
     "@affine/track": "workspace:*",
-    "@blocksuite/affine": "0.17.19",
+    "@blocksuite/affine": "0.17.26",
     "@blocksuite/icons": "2.1.69",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/browser": "^6.0.3",
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/modifiers": "^7.0.0",
     "@dnd-kit/sortable": "^8.0.0",
@@ -34,7 +36,7 @@
     "@radix-ui/react-scroll-area": "^1.0.5",
     "@radix-ui/react-toolbar": "^1.0.4",
     "@sentry/react": "^8.0.0",
-    "@toeverything/theme": "^1.0.11",
+    "@toeverything/theme": "^1.0.17",
     "@vanilla-extract/dynamic": "^2.1.0",
     "animejs": "^3.2.2",
     "bytes": "^3.1.2",
@@ -59,7 +61,7 @@
     "lodash-es": "^4.17.21",
     "lottie-react": "^2.4.0",
     "nanoid": "^5.0.7",
-    "next-themes": "^0.3.0",
+    "next-themes": "^0.4.0",
     "query-string": "^9.1.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -85,6 +87,6 @@
     "@vanilla-extract/css": "^1.14.2",
     "fake-indexeddb": "^6.0.0",
     "lodash-es": "^4.17.21",
-    "vitest": "2.1.1"
+    "vitest": "2.1.4"
   }
 }

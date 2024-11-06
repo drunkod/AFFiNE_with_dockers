@@ -1,7 +1,6 @@
+import type { FetchService, GraphQLService } from '@affine/core/modules/cloud';
 import {
   deleteBlobMutation,
-  fetcher,
-  getBaseUrl,
   listBlobsQuery,
   setBlobMutation,
   UserFriendlyError,
@@ -12,7 +11,11 @@ import { BlobStorageOverCapacity } from '@toeverything/infra';
 import { bufferToBlob } from '../../utils/buffer-to-blob';
 
 export class CloudBlobStorage implements BlobStorage {
-  constructor(private readonly workspaceId: string) {}
+  constructor(
+    private readonly workspaceId: string,
+    private readonly fetchService: FetchService,
+    private readonly gqlService: GraphQLService
+  ) {}
 
   name = 'cloud';
   readonly = false;
@@ -22,26 +25,35 @@ export class CloudBlobStorage implements BlobStorage {
       ? key
       : `/api/workspaces/${this.workspaceId}/blobs/${key}`;
 
-    return fetch(getBaseUrl() + suffix, { cache: 'default' }).then(
-      async res => {
+    return this.fetchService
+      .fetch(suffix, {
+        cache: 'default',
+        headers: {
+          Accept: 'application/octet-stream', // this is necessary for ios native fetch to return arraybuffer
+        },
+      })
+      .then(async res => {
         if (!res.ok) {
           // status not in the range 200-299
           return null;
         }
         return bufferToBlob(await res.arrayBuffer());
-      }
-    );
+      })
+      .catch(() => {
+        return null;
+      });
   }
 
   async set(key: string, value: Blob) {
     // set blob will check blob size & quota
-    return await fetcher({
-      query: setBlobMutation,
-      variables: {
-        workspaceId: this.workspaceId,
-        blob: new File([value], key),
-      },
-    })
+    return await this.gqlService
+      .gql({
+        query: setBlobMutation,
+        variables: {
+          workspaceId: this.workspaceId,
+          blob: new File([value], key),
+        },
+      })
       .then(res => res.setBlob)
       .catch(err => {
         const error = UserFriendlyError.fromAnyError(err);
@@ -54,7 +66,7 @@ export class CloudBlobStorage implements BlobStorage {
   }
 
   async delete(key: string) {
-    await fetcher({
+    await this.gqlService.gql({
       query: deleteBlobMutation,
       variables: {
         workspaceId: key,
@@ -64,7 +76,7 @@ export class CloudBlobStorage implements BlobStorage {
   }
 
   async list() {
-    const result = await fetcher({
+    const result = await this.gqlService.gql({
       query: listBlobsQuery,
       variables: {
         workspaceId: this.workspaceId,

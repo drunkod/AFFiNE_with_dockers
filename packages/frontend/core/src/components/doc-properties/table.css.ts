@@ -10,6 +10,7 @@ export const root = style({
   width: '100%',
   justifyContent: 'center',
   fontFamily: cssVar('fontSansFamily'),
+  paddingBottom: '18px',
   vars: {
     [propertyNameCellWidth]: '160px',
     [fontSize]: cssVar('fontSm'),
@@ -39,36 +40,13 @@ export const rootCentered = style({
 
 export const tableHeader = style({
   display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-});
-
-export const tableHeaderInfoRow = style({
-  display: 'flex',
-  flexDirection: 'row',
+  height: 30,
+  padding: 4,
+  marginBottom: '8px',
   justifyContent: 'space-between',
   alignItems: 'center',
   color: cssVarV2('text/secondary'),
-  fontSize: fontSize,
   fontWeight: 500,
-  minHeight: 34,
-  '@media': {
-    print: {
-      display: 'none',
-    },
-  },
-});
-
-export const tableHeaderSecondaryRow = style({
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'center',
-  color: cssVar('textPrimaryColor'),
-  fontSize: fontSize,
-  fontWeight: 500,
-  padding: `0 6px`,
-  gap: '8px',
-  height: 24,
   '@media': {
     print: {
       display: 'none',
@@ -81,6 +59,7 @@ export const tableHeaderCollapseButtonWrapper = style({
   flex: 1,
   justifyContent: 'flex-end',
   cursor: 'pointer',
+  fontSize: 20,
 });
 
 export const pageInfoDimmed = style({
@@ -148,7 +127,7 @@ export const tableBodySortable = style({
 export const actionContainer = style({
   display: 'flex',
   flexDirection: 'row',
-  gap: 8,
+  paddingTop: '2px',
   selectors: {
     [`[data-property-collapsed="true"] &`]: {
       display: 'none',
@@ -157,13 +136,15 @@ export const actionContainer = style({
 });
 
 export const propertyActionButton = style({
-  alignSelf: 'flex-start',
   fontSize: cssVar('fontSm'),
   color: `${cssVarV2('text/secondary')}`,
   padding: '0 6px',
-  height: 36,
+  height: 34,
   fontWeight: 400,
   gap: 6,
+  width: '160px',
+  borderRadius: '4px',
+  justifyContent: 'start',
   '@media': {
     print: {
       display: 'none',

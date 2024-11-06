@@ -3,6 +3,7 @@ import { ResizePanel } from '@affine/component/resize-panel';
 import { useAppSettingHelper } from '@affine/core/components/hooks/affine/use-app-setting-helper';
 import { NavigateContext } from '@affine/core/components/hooks/use-navigate-helper';
 import { WorkspaceNavigator } from '@affine/core/components/workspace-selector';
+import { useI18n } from '@affine/i18n';
 import {
   useLiveData,
   useService,
@@ -23,6 +24,7 @@ import {
   navHeaderStyle,
   navStyle,
   navWrapperStyle,
+  resizeHandleShortcutStyle,
   sidebarFloatMaskStyle,
 } from './index.css';
 import { SidebarHeader } from './sidebar-header';
@@ -48,22 +50,21 @@ export function AppSidebar({ children }: PropsWithChildren) {
   const smallScreenMode = useLiveData(appSidebarService.smallScreenMode$);
   const hovering = useLiveData(appSidebarService.hovering$) && open !== true;
   const resizing = useLiveData(appSidebarService.resizing$);
-  const [deferredHovering, setDeferredHovering] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
-    if (open) {
-      // if open, we don't need to show the floating sidebar
-      setDeferredHovering(false);
+    if (BUILD_CONFIG.isElectron) {
+      setInitialized(true);
       return;
     }
-    // we make a little delay here.
-    // this allow the sidebar close animation to complete.
-    const timeout = setTimeout(() => {
-      setDeferredHovering(hovering);
-    }, 150);
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [hovering, open]);
+    const shouldFloating = window.matchMedia(
+      `(max-width: ${floatingMaxWidth}px)`
+    ).matches;
+
+    appSidebarService.setSmallScreenMode(shouldFloating);
+    setInitialized(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sidebarState = smallScreenMode
     ? open
@@ -71,7 +72,7 @@ export function AppSidebar({ children }: PropsWithChildren) {
       : 'close'
     : open
       ? 'open'
-      : deferredHovering
+      : hovering
         ? 'floating'
         : 'close';
 
@@ -90,7 +91,6 @@ export function AppSidebar({ children }: PropsWithChildren) {
     }
 
     const dOnResize = debounce(onResize, 50);
-    onResize();
     window.addEventListener('resize', dOnResize);
     return () => {
       window.removeEventListener('resize', dOnResize);
@@ -124,13 +124,32 @@ export function AppSidebar({ children }: PropsWithChildren) {
     appSidebarService.setOpen(false);
   }, [appSidebarService]);
 
-  const onMouseEnter = useCallback(() => {
-    appSidebarService.setHovering(true);
-  }, [appSidebarService]);
+  useEffect(() => {
+    if (sidebarState !== 'floating' || resizing) {
+      return;
+    }
+    const onMouseMove = (e: MouseEvent) => {
+      const menuElement = document.querySelector(
+        'body > [data-radix-popper-content-wrapper] > [data-radix-menu-content]'
+      );
 
-  const onMouseLeave = useCallback(() => {
-    appSidebarService.setHovering(false);
-  }, [appSidebarService]);
+      if (menuElement) {
+        return;
+      }
+
+      if (e.clientX > width + 20) {
+        appSidebarService.setHovering(false);
+      }
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+    };
+  }, [appSidebarService, resizing, sidebarState, width]);
+
+  if (!initialized) {
+    return null;
+  }
 
   return (
     <>
@@ -147,13 +166,19 @@ export function AppSidebar({ children }: PropsWithChildren) {
         onOpen={handleOpenChange}
         onResizing={handleResizing}
         onWidthChange={handleWidthChange}
+        unmountOnExit={false}
         className={clsx(navWrapperStyle, {
           [hoverNavWrapperStyle]: sidebarState === 'floating',
         })}
         resizeHandleOffset={0}
         resizeHandleVerticalPadding={clientBorder ? 16 : 0}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
+        resizeHandleTooltip={<ResizeHandleTooltipContent />}
+        resizeHandleTooltipOptions={{
+          side: 'right',
+          align: 'center',
+        }}
+        resizeHandleTooltipShortcut={['$mod', '/']}
+        resizeHandleTooltipShortcutClassName={resizeHandleShortcutStyle}
         data-transparent
         data-open={sidebarState !== 'close'}
         data-has-border={hasRightBorder}
@@ -181,6 +206,16 @@ export function AppSidebar({ children }: PropsWithChildren) {
     </>
   );
 }
+
+const ResizeHandleTooltipContent = () => {
+  const t = useI18n();
+  return (
+    <div>
+      <div>{t['com.affine.rootAppSidebar.resize-handle.tooltip.drag']()}</div>
+      <div>{t['com.affine.rootAppSidebar.resize-handle.tooltip.click']()}</div>
+    </div>
+  );
+};
 
 export function FallbackHeader() {
   return (
@@ -328,6 +363,7 @@ export * from './app-updater-button';
 export * from './category-divider';
 export * from './index.css';
 export * from './menu-item';
+export * from './open-in-app-card';
 export * from './quick-search-input';
 export * from './sidebar-containers';
 export * from './sidebar-header';

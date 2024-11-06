@@ -11,7 +11,7 @@ import { EditorService } from '../modules/editor';
 import {
   EditorSettingService,
   fontStyleOptions,
-} from '../modules/editor-settting';
+} from '../modules/editor-setting';
 import { BlockSuiteEditor as Editor } from './blocksuite/block-suite-editor';
 import * as styles from './page-detail-editor.css';
 
@@ -31,6 +31,7 @@ export interface PageDetailEditorProps {
 export const PageDetailEditor = ({ onLoad }: PageDetailEditorProps) => {
   const editor = useService(EditorService).editor;
   const mode = useLiveData(editor.mode$);
+  const defaultOpenProperty = useLiveData(editor.defaultOpenProperty$);
 
   const isSharedMode = editor.isSharedMode;
   const editorSetting = useService(EditorSettingService).editorSetting;
@@ -68,6 +69,7 @@ export const PageDetailEditor = ({ onLoad }: PageDetailEditorProps) => {
         } as CSSProperties
       }
       mode={mode}
+      defaultOpenProperty={defaultOpenProperty}
       page={editor.doc.blockSuiteDoc}
       shared={isSharedMode}
       onEditorReady={onLoad}

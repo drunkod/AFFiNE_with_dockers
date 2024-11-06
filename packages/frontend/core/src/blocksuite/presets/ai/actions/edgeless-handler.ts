@@ -16,6 +16,7 @@ import {
 } from '@blocksuite/affine/blocks';
 import { assertExists } from '@blocksuite/affine/global/utils';
 import { Slice } from '@blocksuite/affine/store';
+import { GfxControllerIdentifier } from '@blocksuite/block-std/gfx';
 import { AIChatBlockModel } from '@toeverything/infra';
 import type { TemplateResult } from 'lit';
 
@@ -216,7 +217,8 @@ function actionToStream<T extends keyof BlockSuitePresets.AIActions>(
     attachments?: (string | Blob)[];
     seed?: string;
   } | void>,
-  trackerOptions?: BlockSuitePresets.TrackerOptions
+  trackerOptions?: BlockSuitePresets.TrackerOptions,
+  panelInput?: string
 ) {
   const action = AIProvider.actions[id];
 
@@ -233,7 +235,7 @@ function actionToStream<T extends keyof BlockSuitePresets.AIActions>(
           const options = {
             ...variants,
             signal,
-            input: '',
+            input: panelInput ?? '',
             stream: true,
             control,
             where,
@@ -243,6 +245,12 @@ function actionToStream<T extends keyof BlockSuitePresets.AIActions>(
             workspaceId: host.doc.collection.id,
           } as Parameters<typeof action>[0];
 
+          const content = ctx.get().content;
+          if (typeof content === 'string' && !content.length && panelInput) {
+            ctx.set({
+              content: panelInput,
+            });
+          }
           const data = await extract(host, ctx);
           if (data) {
             Object.assign(options, data);
@@ -305,6 +313,7 @@ function actionToGeneration<T extends keyof BlockSuitePresets.AIActions>(
 ) {
   return (host: EditorHost, ctx: CtxRecord) => {
     return ({
+      input,
       signal,
       update,
       finish,
@@ -324,7 +333,8 @@ function actionToGeneration<T extends keyof BlockSuitePresets.AIActions>(
         signal,
         variants,
         extract,
-        trackerOptions
+        trackerOptions,
+        input
       )?.(host, ctx);
 
       if (!stream) return;
@@ -388,7 +398,8 @@ function updateEdgelessAIPanelConfig<
   config.hideCallback = () => {
     aiPanel.updateComplete
       .finally(() => {
-        edgelessCopilot.edgeless.service.tool.switchToDefaultMode({
+        edgelessCopilot.edgeless.gfx.tool.setTool('default');
+        edgelessCopilot.edgeless.gfx.selection.set({
           elements: [],
           editing: false,
         });
@@ -415,7 +426,8 @@ export function actionToHandler<T extends keyof BlockSuitePresets.AIActions>(
     attachments?: (string | Blob)[];
     seed?: string;
   } | void>,
-  trackerOptions?: BlockSuitePresets.TrackerOptions
+  trackerOptions?: BlockSuitePresets.TrackerOptions,
+  toggleEmptyInput?: boolean
 ) {
   return (host: EditorHost) => {
     const aiPanel = getAIPanel(host);
@@ -465,14 +477,20 @@ export function actionToHandler<T extends keyof BlockSuitePresets.AIActions>(
     } else if (!isEmpty) {
       const lastSelected = selectedElements.at(-1)?.id;
       assertExists(lastSelected);
-      referenceElement = getSelectedNoteAnchor(host, lastSelected);
+      const noteAnchor = getSelectedNoteAnchor(host, lastSelected);
+      referenceElement = noteAnchor;
     }
 
-    if (!referenceElement) return;
+    if (!referenceElement) {
+      const gfx = host.std.get(GfxControllerIdentifier);
+      gfx?.tool.setTool({ type: 'default' });
+      edgelessCopilot.lockToolbar(false);
+      return;
+    }
 
     if (isCreateImageAction || isMakeItRealAction) {
       togglePanel = async () => {
-        if (isEmpty) return true;
+        if (isEmpty || toggleEmptyInput) return true;
         const { notes, shapes, images, edgelessTexts, embedSyncedDocs } =
           BlocksUtils.splitElements(selectedElements);
         const blocks = [
@@ -493,7 +511,11 @@ export function actionToHandler<T extends keyof BlockSuitePresets.AIActions>(
 
     togglePanel()
       .then(isEmpty => {
-        aiPanel.toggle(referenceElement, isEmpty ? undefined : 'placeholder');
+        aiPanel.toggle(
+          referenceElement,
+          isEmpty ? undefined : 'placeholder',
+          false
+        );
       })
       .catch(console.error);
   };

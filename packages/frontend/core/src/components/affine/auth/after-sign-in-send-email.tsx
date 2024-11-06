@@ -7,18 +7,19 @@ import {
 } from '@affine/component/auth-components';
 import { Button } from '@affine/component/ui/button';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
-import { AuthService } from '@affine/core/modules/cloud';
+import { AuthService, CaptchaService } from '@affine/core/modules/cloud';
 import { Trans, useI18n } from '@affine/i18n';
-import { useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import { useCallback, useEffect, useState } from 'react';
 
 import type { AuthPanelProps } from './index';
 import * as style from './style.css';
-import { Captcha, useCaptcha } from './use-captcha';
+import { Captcha } from './use-captcha';
 
 export const AfterSignInSendEmail = ({
   setAuthData: setAuth,
   email,
+  redirectUrl,
 }: AuthPanelProps<'afterSignInSendEmail'>) => {
   const [resendCountDown, setResendCountDown] = useState(60);
 
@@ -36,16 +37,23 @@ export const AfterSignInSendEmail = ({
 
   const t = useI18n();
   const authService = useService(AuthService);
+  const captchaService = useService(CaptchaService);
 
-  const [verifyToken, challenge] = useCaptcha();
+  const verifyToken = useLiveData(captchaService.verifyToken$);
+  const needCaptcha = useLiveData(captchaService.needCaptcha$);
+  const challenge = useLiveData(captchaService.challenge$);
 
   const onResendClick = useAsyncCallback(async () => {
     setIsSending(true);
     try {
-      if (verifyToken) {
-        setResendCountDown(60);
-        await authService.sendEmailMagicLink(email, verifyToken, challenge);
-      }
+      setResendCountDown(60);
+      captchaService.revalidate();
+      await authService.sendEmailMagicLink(
+        email,
+        verifyToken,
+        challenge,
+        redirectUrl
+      );
     } catch (err) {
       console.error(err);
       notify.error({
@@ -53,7 +61,7 @@ export const AfterSignInSendEmail = ({
       });
     }
     setIsSending(false);
-  }, [authService, challenge, email, verifyToken]);
+  }, [authService, captchaService, challenge, email, redirectUrl, verifyToken]);
 
   const onSignInWithPasswordClick = useCallback(() => {
     setAuth({ state: 'signInWithPassword' });
@@ -83,8 +91,10 @@ export const AfterSignInSendEmail = ({
           <>
             <Captcha />
             <Button
-              style={!verifyToken ? { cursor: 'not-allowed' } : {}}
-              disabled={!verifyToken || isSending}
+              style={
+                !verifyToken && needCaptcha ? { cursor: 'not-allowed' } : {}
+              }
+              disabled={(!verifyToken && needCaptcha) || isSending}
               variant="plain"
               size="large"
               onClick={onResendClick}

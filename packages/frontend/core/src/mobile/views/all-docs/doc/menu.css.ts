@@ -1,3 +1,4 @@
+import { bodyEmphasized, bodyRegular } from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { style } from '@vanilla-extract/css';
 
@@ -6,28 +7,25 @@ export const root = style({
   flexDirection: 'column',
   gap: 10,
 });
-export const head = style({
-  padding: '10px 20px',
-  fontSize: 17,
-  fontWeight: 600,
-  lineHeight: '22px',
-  letterSpacing: -0.43,
-  color: cssVarV2('text/primary'),
-});
+export const head = style([
+  bodyEmphasized,
+  {
+    padding: '10px 20px',
+    color: cssVarV2('text/primary'),
+  },
+]);
 
-export const item = style({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: 4,
-  height: 34,
-  padding: '0 20px',
-
-  fontSize: 17,
-  lineHeight: '22px',
-  fontWeight: 400,
-  letterSpacing: -0.43,
-});
+export const item = style([
+  bodyRegular,
+  {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 4,
+    height: 34,
+    padding: '0 20px',
+  },
+]);
 export const itemSuffix = style({
   display: 'flex',
   gap: 8,

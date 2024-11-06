@@ -1,6 +1,7 @@
 export { Doc } from './entities/doc';
 export { DocRecord } from './entities/record';
 export { DocRecordList } from './entities/record-list';
+export { DocCreated } from './events';
 export { DocScope } from './scopes/doc';
 export { DocService } from './services/doc';
 export { DocsService } from './services/docs';

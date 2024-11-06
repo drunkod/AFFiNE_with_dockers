@@ -368,7 +368,7 @@ describe('ORM entity CRUD', () => {
         name: 'test',
       });
 
-      expect(user.email).toBe(null);
+      expect(user.email).toBe(undefined);
     }
 
     {

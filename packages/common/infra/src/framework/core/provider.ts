@@ -55,7 +55,7 @@ export abstract class FrameworkProvider {
   getOptional = <T>(
     identifier: GeneralIdentifier<T>,
     options?: ResolveOptions
-  ): T | null => {
+  ): T | undefined => {
     return this.getRaw(parseIdentifier(identifier), {
       ...options,
       optional: true,

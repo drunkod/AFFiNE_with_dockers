@@ -121,9 +121,7 @@ const useSendEmail = (emailType: AuthPanelProps<'sendEmail'>['emailType']) => {
         // TODO(@eyhn): add error handler
         return trigger({
           email,
-          callbackUrl: `/auth/${callbackUrl}?isClient=${
-            BUILD_CONFIG.isElectron ? 'true' : 'false'
-          }`,
+          callbackUrl: `/auth/${callbackUrl}`,
         });
       },
       [
@@ -141,6 +139,7 @@ export const SendEmail = ({
   setAuthData,
   email,
   emailType,
+  // todo(@pengx17): impl redirectUrl for sendEmail?
 }: AuthPanelProps<'sendEmail'>) => {
   const t = useI18n();
   const serverConfig = useService(ServerConfigService).serverConfig;

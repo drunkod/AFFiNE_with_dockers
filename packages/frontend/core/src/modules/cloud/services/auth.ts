@@ -1,8 +1,5 @@
-import { notify } from '@affine/component';
 import { AIProvider } from '@affine/core/blocksuite/presets/ai';
-import { apis, appInfo, events } from '@affine/electron-api';
 import type { OAuthProviderType } from '@affine/graphql';
-import { I18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import {
   ApplicationFocused,
@@ -13,6 +10,7 @@ import {
 } from '@toeverything/infra';
 import { distinctUntilChanged, map, skip } from 'rxjs';
 
+import type { UrlService } from '../../url';
 import { type AuthAccountInfo, AuthSession } from '../entities/session';
 import type { AuthStore } from '../stores/auth';
 import type { FetchService } from './fetch';
@@ -44,7 +42,8 @@ export class AuthService extends Service {
 
   constructor(
     private readonly fetchService: FetchService,
-    private readonly store: AuthStore
+    private readonly store: AuthStore,
+    private readonly urlService: UrlService
   ) {
     super();
 
@@ -76,33 +75,6 @@ export class AuthService extends Service {
 
   private onApplicationStart() {
     this.session.revalidate();
-
-    if (BUILD_CONFIG.isElectron) {
-      events?.ui.onAuthenticationRequest(({ method, payload }) => {
-        (async () => {
-          if (!(await apis?.ui.isActiveTab())) {
-            return;
-          }
-          switch (method) {
-            case 'magic-link': {
-              const { email, token } = payload;
-              await this.signInMagicLink(email, token);
-              break;
-            }
-            case 'oauth': {
-              const { code, state, provider } = payload;
-              await this.signInOauth(code, state, provider);
-              break;
-            }
-          }
-        })().catch(e => {
-          notify.error({
-            title: I18n['com.affine.auth.toast.title.failed'](),
-            message: (e as any).message,
-          });
-        });
-      });
-    }
   }
 
   private onApplicationFocused() {
@@ -111,22 +83,31 @@ export class AuthService extends Service {
 
   async sendEmailMagicLink(
     email: string,
-    verifyToken: string,
-    challenge?: string
+    verifyToken?: string,
+    challenge?: string,
+    redirectUrl?: string // url to redirect to after signed-in
   ) {
     track.$.$.auth.signIn({ method: 'magic-link' });
     try {
+      const scheme = this.urlService.getClientScheme();
+      const magicLinkUrlParams = new URLSearchParams();
+      if (redirectUrl) {
+        magicLinkUrlParams.set('redirect_uri', redirectUrl);
+      }
+      if (scheme) {
+        magicLinkUrlParams.set('client', scheme);
+      }
       await this.fetchService.fetch('/api/auth/sign-in', {
         method: 'POST',
         body: JSON.stringify({
           email,
           // we call it [callbackUrl] instead of [redirect_uri]
           // to make it clear the url is used to finish the sign-in process instead of redirect after signed-in
-          callbackUrl: `/magic-link?client=${BUILD_CONFIG.isElectron ? appInfo?.schema : 'web'}`,
+          callbackUrl: `/magic-link?${magicLinkUrlParams.toString()}`,
         }),
         headers: {
           'content-type': 'application/json',
-          ...this.captchaHeaders(verifyToken, challenge),
+          ...(verifyToken ? this.captchaHeaders(verifyToken, challenge) : {}),
         },
       });
     } catch (e) {
@@ -213,7 +194,7 @@ export class AuthService extends Service {
   async signInPassword(credential: {
     email: string;
     password: string;
-    verifyToken: string;
+    verifyToken?: string;
     challenge?: string;
   }) {
     track.$.$.auth.signIn({ method: 'password' });
@@ -223,7 +204,9 @@ export class AuthService extends Service {
         body: JSON.stringify(credential),
         headers: {
           'content-type': 'application/json',
-          ...this.captchaHeaders(credential.verifyToken, credential.challenge),
+          ...(credential.verifyToken
+            ? this.captchaHeaders(credential.verifyToken, credential.challenge)
+            : {}),
         },
       });
       this.session.revalidate();

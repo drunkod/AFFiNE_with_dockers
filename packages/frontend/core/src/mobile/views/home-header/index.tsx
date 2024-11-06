@@ -3,13 +3,12 @@ import {
   SafeArea,
   startScopedViewTransition,
 } from '@affine/component';
-import { openSettingModalAtom } from '@affine/core/components/atoms';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
 import { SettingsIcon } from '@blocksuite/icons/rc';
 import { useService } from '@toeverything/infra';
 import clsx from 'clsx';
-import { useSetAtom } from 'jotai';
 import { useCallback, useState } from 'react';
 
 import { SearchInput, WorkspaceSelector } from '../../components';
@@ -26,7 +25,7 @@ import * as styles from './styles.css';
 export const HomeHeader = () => {
   const t = useI18n();
   const workbench = useService(WorkbenchService).workbench;
-  const openSetting = useSetAtom(openSettingModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
 
   const [dense, setDense] = useState(false);
 
@@ -53,7 +52,9 @@ export const HomeHeader = () => {
           <div className={styles.settingWrapper}>
             <IconButton
               onClick={() => {
-                openSetting({ open: true, activeTab: 'appearance' });
+                globalDialogService.open('setting', {
+                  activeTab: 'appearance',
+                });
               }}
               size="24"
               style={{ padding: 10 }}

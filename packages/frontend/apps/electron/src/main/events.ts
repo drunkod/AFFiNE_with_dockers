@@ -58,10 +58,12 @@ export function registerEvents() {
   }
   app.on('before-quit', () => {
     // subscription on quit sometimes crashes the app
-    try {
-      unsubs.forEach(unsub => unsub());
-    } catch (err) {
-      logger.error('unsubscribe error', err);
-    }
+    unsubs.forEach(unsub => {
+      try {
+        unsub();
+      } catch (err) {
+        logger.warn('unsubscribe error on quit', err);
+      }
+    });
   });
 }

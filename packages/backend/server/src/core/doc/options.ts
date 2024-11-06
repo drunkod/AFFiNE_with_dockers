@@ -40,25 +40,26 @@ export class DocStorageOptions implements IDocStorageOptions {
   ) {}
 
   mergeUpdates = async (updates: Uint8Array[]) => {
+    const doc = await this.recoverDoc(updates);
+    const yjsResult = Buffer.from(Y.encodeStateAsUpdate(doc));
+
     const useYocto = await this.config.runtime.fetch(
       'doc/experimentalMergeWithYOcto'
     );
 
     if (useYocto) {
-      const doc = await this.recoverDoc(updates);
-
       metrics.jwst.counter('codec_merge_counter').add(1);
-      const yjsResult = Buffer.from(Y.encodeStateAsUpdate(doc));
       let log = false;
+      let yoctoResult: Buffer | null = null;
       try {
-        const yocto = yotcoMergeUpdates(updates.map(Buffer.from));
-        if (!compare(yjsResult, yocto)) {
+        yoctoResult = yotcoMergeUpdates(updates.map(Buffer.from));
+        if (!compare(yjsResult, yoctoResult)) {
           metrics.jwst.counter('codec_not_match').add(1);
           this.logger.warn(`yocto codec result doesn't match yjs codec result`);
           log = true;
           if (this.config.node.dev) {
             this.logger.warn(`Expected:\n  ${yjsResult.toString('hex')}`);
-            this.logger.warn(`Result:\n  ${yocto.toString('hex')}`);
+            this.logger.warn(`Result:\n  ${yoctoResult.toString('hex')}`);
           }
         }
       } catch (e) {
@@ -73,10 +74,16 @@ export class DocStorageOptions implements IDocStorageOptions {
         );
       }
 
-      return yjsResult;
-    } else {
-      return this.simpleMergeUpdates(updates);
+      if (
+        this.config.affine.canary &&
+        yoctoResult &&
+        yoctoResult.length > 2 /* simple test for non-empty yjs binary */
+      ) {
+        return yoctoResult;
+      }
     }
+
+    return yjsResult;
   };
 
   historyMaxAge = async (spaceId: string) => {
@@ -88,11 +95,6 @@ export class DocStorageOptions implements IDocStorageOptions {
   historyMinInterval = (_spaceId: string) => {
     return this.config.doc.history.interval;
   };
-
-  @CallMetric('doc', 'yjs_merge_updates')
-  private simpleMergeUpdates(updates: Uint8Array[]) {
-    return Y.mergeUpdates(updates);
-  }
 
   @CallMetric('doc', 'yjs_recover_updates_to_doc')
   private recoverDoc(updates: Uint8Array[]): Promise<Y.Doc> {

@@ -32,10 +32,10 @@ const dragToFavourites = async (
 
 const createCollection = async (page: Page, name: string) => {
   await page.getByTestId('explorer-bar-add-collection-button').click();
-  const input = page.getByTestId('input-collection-title');
+  const input = page.getByTestId('prompt-modal-input');
   await expect(input).toBeVisible();
   await input.fill(name);
-  await page.getByTestId('save-collection').click();
+  await page.getByTestId('prompt-modal-confirm').click();
   const newCollectionId = getCurrentCollectionIdFromUrl(page);
   const collection = page.getByTestId(`explorer-collection-${newCollectionId}`);
   await expect(collection).toBeVisible();

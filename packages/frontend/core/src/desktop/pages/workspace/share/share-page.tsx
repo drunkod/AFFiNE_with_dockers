@@ -1,13 +1,16 @@
 import { Scrollable } from '@affine/component';
-import { AppFallback } from '@affine/core/components/affine/app-container';
 import { EditorOutlineViewer } from '@affine/core/components/blocksuite/outline-viewer';
 import { useActiveBlocksuiteEditor } from '@affine/core/components/hooks/use-block-suite-editor';
 import { usePageDocumentTitle } from '@affine/core/components/hooks/use-global-state';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
 import { PageDetailEditor } from '@affine/core/components/page-detail-editor';
 import { SharePageNotFoundError } from '@affine/core/components/share-page-not-found-error';
-import { AppContainer, MainContainer } from '@affine/core/components/workspace';
-import { AuthService } from '@affine/core/modules/cloud';
+import { AppContainer } from '@affine/core/desktop/components/app-container';
+import {
+  AuthService,
+  FetchService,
+  GraphQLService,
+} from '@affine/core/modules/cloud';
 import {
   type Editor,
   type EditorSelector,
@@ -16,6 +19,7 @@ import {
 } from '@affine/core/modules/editor';
 import { PeekViewManagerModal } from '@affine/core/modules/peek-view';
 import { ShareReaderService } from '@affine/core/modules/share-doc';
+import { ViewIcon, ViewTitle } from '@affine/core/modules/workbench';
 import { CloudBlobStorage } from '@affine/core/modules/workspace-engine';
 import { WorkspaceFlavour } from '@affine/env/workspace';
 import { useI18n } from '@affine/i18n';
@@ -39,7 +43,13 @@ import {
   WorkspacesService,
 } from '@toeverything/infra';
 import clsx from 'clsx';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { PageNotFound } from '../../404';
@@ -97,17 +107,12 @@ export const SharePage = ({
     shareReaderService.reader.loadShare({ workspaceId, docId });
   }, [shareReaderService, docId, workspaceId]);
 
+  let element: ReactNode = null;
+
   if (isLoading) {
-    return <AppFallback />;
-  }
-
-  if (error) {
-    // TODO(@eyhn): show error details
-    return <SharePageNotFoundError />;
-  }
-
-  if (data) {
-    return (
+    element = null;
+  } else if (data) {
+    element = (
       <SharePageInner
         workspaceId={data.workspaceId}
         docId={data.docId}
@@ -120,9 +125,13 @@ export const SharePage = ({
         templateSnapshotUrl={templateSnapshotUrl}
       />
     );
+  } else if (error) {
+    element = <SharePageNotFoundError />;
   } else {
-    return <PageNotFound noPermission />;
+    element = <PageNotFound noPermission />;
   }
+
+  return <AppContainer fallback={!element}>{element}</AppContainer>;
 };
 
 const SharePageInner = ({
@@ -147,7 +156,8 @@ const SharePageInner = ({
   templateSnapshotUrl?: string;
 }) => {
   const workspacesService = useService(WorkspacesService);
-
+  const fetchService = useService(FetchService);
+  const graphQLService = useService(GraphQLService);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [page, setPage] = useState<Doc | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -181,7 +191,9 @@ const SharePageInner = ({
           return EmptyBlobStorage;
         },
         getRemoteBlobStorages() {
-          return [new CloudBlobStorage(workspaceId)];
+          return [
+            new CloudBlobStorage(workspaceId, fetchService, graphQLService),
+          ];
         },
       }
     );
@@ -220,9 +232,12 @@ const SharePageInner = ({
     selector,
     workspaceBinary,
     docBinary,
+    fetchService,
+    graphQLService,
   ]);
 
-  const pageTitle = useLiveData(page?.title$);
+  const t = useI18n();
+  const pageTitle = useLiveData(page?.title$) ?? t['unnamed']();
   const { jumpToPageBlock, openPage } = useNavigateHelper();
 
   usePageDocumentTitle(pageTitle);
@@ -233,11 +248,7 @@ const SharePageInner = ({
       if (!editor) {
         return;
       }
-      editor.setEditorContainer(editorContainer);
-      const unbind = editor.bindEditorContainer(
-        editorContainer,
-        (editorContainer as any).docTitle
-      );
+      const unbind = editor.bindEditorContainer(editorContainer);
 
       const disposable = new DisposableGroup();
       const refNodeSlots =
@@ -262,7 +273,6 @@ const SharePageInner = ({
 
       return () => {
         unbind();
-        editor.setEditorContainer(null);
       };
     },
     [editor, setActiveBlocksuiteEditor, jumpToPageBlock, openPage, workspaceId]
@@ -276,39 +286,39 @@ const SharePageInner = ({
     <FrameworkScope scope={workspace.scope}>
       <FrameworkScope scope={page.scope}>
         <FrameworkScope scope={editor.scope}>
-          <AppContainer>
-            <MainContainer>
-              <div className={styles.root}>
-                <div className={styles.mainContainer}>
-                  <ShareHeader
-                    pageId={page.id}
-                    publishMode={publishMode}
-                    isTemplate={isTemplate}
-                    templateName={templateName}
-                    snapshotUrl={templateSnapshotUrl}
-                  />
-                  <Scrollable.Root>
-                    <Scrollable.Viewport
-                      className={clsx(
-                        'affine-page-viewport',
-                        styles.editorContainer
-                      )}
-                    >
-                      <PageDetailEditor onLoad={onEditorLoad} />
-                      {publishMode === 'page' ? <ShareFooter /> : null}
-                    </Scrollable.Viewport>
-                    <Scrollable.Scrollbar />
-                  </Scrollable.Root>
-                  <EditorOutlineViewer
-                    editor={editorContainer}
-                    show={publishMode === 'page'}
-                  />
-                  <SharePageFooter />
-                </div>
-              </div>
-            </MainContainer>
-            <PeekViewManagerModal />
-          </AppContainer>
+          <ViewIcon icon={publishMode === 'page' ? 'doc' : 'edgeless'} />
+          <ViewTitle title={pageTitle} />
+          <div className={styles.root}>
+            <div className={styles.mainContainer}>
+              <ShareHeader
+                pageId={page.id}
+                publishMode={publishMode}
+                isTemplate={isTemplate}
+                templateName={templateName}
+                snapshotUrl={templateSnapshotUrl}
+              />
+              <Scrollable.Root>
+                <Scrollable.Viewport
+                  className={clsx(
+                    'affine-page-viewport',
+                    styles.editorContainer
+                  )}
+                >
+                  <PageDetailEditor onLoad={onEditorLoad} />
+                  {publishMode === 'page' && !BUILD_CONFIG.isElectron ? (
+                    <ShareFooter />
+                  ) : null}
+                </Scrollable.Viewport>
+                <Scrollable.Scrollbar />
+              </Scrollable.Root>
+              <EditorOutlineViewer
+                editor={editorContainer}
+                show={publishMode === 'page'}
+              />
+              {!BUILD_CONFIG.isElectron && <SharePageFooter />}
+            </div>
+          </div>
+          <PeekViewManagerModal />
         </FrameworkScope>
       </FrameworkScope>
     </FrameworkScope>

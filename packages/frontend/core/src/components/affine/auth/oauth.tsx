@@ -1,7 +1,6 @@
 import { Skeleton } from '@affine/component';
 import { Button } from '@affine/component/ui/button';
-import { popupWindow } from '@affine/core/utils';
-import { appInfo } from '@affine/electron-api';
+import { UrlService } from '@affine/core/modules/url';
 import { OAuthProviderType } from '@affine/graphql';
 import { GithubIcon, GoogleDuotoneIcon } from '@blocksuite/icons/rc';
 import { useLiveData, useService } from '@toeverything/infra';
@@ -29,36 +28,66 @@ const OAuthProviderMap: Record<
   },
 };
 
-export function OAuth() {
+export function OAuth({ redirectUrl }: { redirectUrl?: string }) {
   const serverConfig = useService(ServerConfigService).serverConfig;
+  const urlService = useService(UrlService);
   const oauth = useLiveData(serverConfig.features$.map(r => r?.oauth));
   const oauthProviders = useLiveData(
     serverConfig.config$.map(r => r?.oauthProviders)
   );
+  const scheme = urlService.getClientScheme();
 
   if (!oauth) {
     return <Skeleton height={50} />;
   }
 
   return oauthProviders?.map(provider => (
-    <OAuthProvider key={provider} provider={provider} />
+    <OAuthProvider
+      key={provider}
+      provider={provider}
+      redirectUrl={redirectUrl}
+      scheme={scheme}
+      popupWindow={url => {
+        urlService.openPopupWindow(url);
+      }}
+    />
   ));
 }
 
-function OAuthProvider({ provider }: { provider: OAuthProviderType }) {
+function OAuthProvider({
+  provider,
+  redirectUrl,
+  scheme,
+  popupWindow,
+}: {
+  provider: OAuthProviderType;
+  redirectUrl?: string;
+  scheme?: string;
+  popupWindow: (url: string) => void;
+}) {
   const { icon } = OAuthProviderMap[provider];
 
   const onClick = useCallback(() => {
-    let oauthUrl =
-      (BUILD_CONFIG.isElectron ? BUILD_CONFIG.serverUrlPrefix : '') +
-      `/oauth/login?provider=${provider}`;
+    const params = new URLSearchParams();
 
-    if (BUILD_CONFIG.isElectron) {
-      oauthUrl += `&client=${appInfo?.schema}`;
+    params.set('provider', provider);
+
+    if (redirectUrl) {
+      params.set('redirect_uri', redirectUrl);
     }
 
+    if (scheme) {
+      params.set('client', scheme);
+    }
+
+    // TODO: Android app scheme not implemented
+    // if (BUILD_CONFIG.isAndroid) {}
+
+    const oauthUrl =
+      BUILD_CONFIG.serverUrlPrefix + `/oauth/login?${params.toString()}`;
+
     popupWindow(oauthUrl);
-  }, [provider]);
+  }, [popupWindow, provider, redirectUrl, scheme]);
 
   return (
     <Button

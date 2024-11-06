@@ -1,6 +1,7 @@
-import { Divider, IconButton } from '@affine/component';
+import { Divider, IconButton, Tooltip } from '@affine/component';
 import { generateUniqueNameInSequence } from '@affine/core/utils/unique-name';
 import { useI18n } from '@affine/i18n';
+import track from '@affine/track';
 import { PlusIcon } from '@blocksuite/icons/rc';
 import {
   Content as CollapsibleContent,
@@ -41,13 +42,17 @@ export const DocPropertySidebar = () => {
       const name = nameExists
         ? generateUniqueNameInSequence(option.name, allNames)
         : option.name;
-      const newPropertyId = propertyList.createProperty({
+      const newProperty = propertyList.createProperty({
         id: typeDefined.uniqueId,
         name,
         type: option.type,
         index: propertyList.indexAt('after'),
       });
-      setNewPropertyId(newPropertyId);
+      setNewPropertyId(newProperty.id);
+      track.doc.sidepanel.property.addProperty({
+        control: 'property list',
+        type: option.type,
+      });
     },
     [propertyList, properties]
   );
@@ -77,27 +82,32 @@ export const DocPropertySidebar = () => {
                 meta => meta.id === value.uniqueId
               );
               return (
-                <div
-                  className={styles.itemContainer}
+                <Tooltip
                   key={key}
-                  onClick={() => {
-                    onAddProperty({
-                      type: key,
-                      name,
-                    });
-                  }}
-                  data-disabled={isUniqueExist}
+                  content={t.t(value.description || value.name)}
+                  side="left"
                 >
-                  <Icon className={styles.itemIcon} />
-                  <span className={styles.itemName}>{t.t(value.name)}</span>
-                  {isUniqueExist ? (
-                    <span className={styles.itemAdded}>Added</span>
-                  ) : (
-                    <IconButton size={20} iconClassName={styles.itemAdd}>
-                      <PlusIcon />
-                    </IconButton>
-                  )}
-                </div>
+                  <div
+                    className={styles.itemContainer}
+                    onClick={() => {
+                      onAddProperty({
+                        type: key,
+                        name,
+                      });
+                    }}
+                    data-disabled={isUniqueExist}
+                  >
+                    <Icon className={styles.itemIcon} />
+                    <span className={styles.itemName}>{t.t(value.name)}</span>
+                    {isUniqueExist ? (
+                      <span className={styles.itemAdded}>Added</span>
+                    ) : (
+                      <IconButton size={20} iconClassName={styles.itemAdd}>
+                        <PlusIcon />
+                      </IconButton>
+                    )}
+                  </div>
+                </Tooltip>
               );
             })}
           </div>

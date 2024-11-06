@@ -21,7 +21,11 @@ export interface InvertedIndex {
 }
 
 export class StringInvertedIndex implements InvertedIndex {
-  constructor(readonly fieldKey: string) {}
+  constructor(
+    readonly fieldKey: string,
+    readonly index: boolean = true,
+    readonly store: boolean = true
+  ) {}
 
   async match(trx: DataStructROTransaction, term: string): Promise<Match> {
     const objs = await trx
@@ -69,7 +73,11 @@ export class StringInvertedIndex implements InvertedIndex {
 }
 
 export class IntegerInvertedIndex implements InvertedIndex {
-  constructor(readonly fieldKey: string) {}
+  constructor(
+    readonly fieldKey: string,
+    readonly index: boolean = true,
+    readonly store: boolean = true
+  ) {}
 
   async match(trx: DataStructROTransaction, term: string): Promise<Match> {
     const objs = await trx
@@ -118,7 +126,11 @@ export class IntegerInvertedIndex implements InvertedIndex {
 }
 
 export class BooleanInvertedIndex implements InvertedIndex {
-  constructor(readonly fieldKey: string) {}
+  constructor(
+    readonly fieldKey: string,
+    readonly index: boolean = true,
+    readonly store: boolean = true
+  ) {}
 
   // eslint-disable-next-line sonarjs/no-identical-functions
   async all(trx: DataStructROTransaction): Promise<Match> {
@@ -172,7 +184,11 @@ export class BooleanInvertedIndex implements InvertedIndex {
 }
 
 export class FullTextInvertedIndex implements InvertedIndex {
-  constructor(readonly fieldKey: string) {}
+  constructor(
+    readonly fieldKey: string,
+    readonly index: boolean = true,
+    readonly store: boolean = true
+  ) {}
 
   async match(trx: DataStructROTransaction, term: string): Promise<Match> {
     const queryTokens = new GeneralTokenizer().tokenize(term);
@@ -186,6 +202,12 @@ export class FullTextInvertedIndex implements InvertedIndex {
         }
       >
     >();
+    const avgFieldLength =
+      (
+        await trx
+          .objectStore('kvMetadata')
+          .get(`full-text:avg-field-length:${this.fieldKey}`)
+      )?.value ?? 0;
     for (const token of queryTokens) {
       const key = InvertedIndexKey.forString(this.fieldKey, token.term);
       const objs = await trx
@@ -213,12 +235,6 @@ export class FullTextInvertedIndex implements InvertedIndex {
         };
         const termFreq = position.rs.length;
         const totalCount = objs.length;
-        const avgFieldLength =
-          (
-            await trx
-              .objectStore('kvMetadata')
-              .get(`full-text:avg-field-length:${this.fieldKey}`)
-          )?.value ?? 0;
         const fieldLength = position.l;
         const score =
           bm25(termFreq, 1, totalCount, fieldLength, avgFieldLength) *

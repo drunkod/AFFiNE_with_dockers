@@ -116,7 +116,7 @@ export const useResetUserPassword = () => {
       setResetPasswordLink('');
       resetPassword({
         userId: id,
-        callbackUrl: '/auth/changePassword?isClient=false',
+        callbackUrl: '/auth/changePassword',
       })
         .then(res => {
           setResetPasswordLink(res.createChangePasswordUrl);

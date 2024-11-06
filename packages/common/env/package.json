@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "@blocksuite/affine": "0.17.19",
-    "vitest": "2.1.1"
+    "@blocksuite/affine": "0.17.26",
+    "vitest": "2.1.4"
   },
   "exports": {
     "./automation": "./src/automation.ts",

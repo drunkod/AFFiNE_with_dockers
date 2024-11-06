@@ -1,39 +1,14 @@
 import { atom } from 'jotai';
 
-import type { SettingProps } from '../affine/setting-modal';
-import type { ActiveTab } from '../affine/setting-modal/types';
 // modal atoms
 export const openWorkspacesModalAtom = atom(false);
 /**
  * @deprecated use `useSignOut` hook instated
  */
-export const openSignOutModalAtom = atom(false);
 export const openQuotaModalAtom = atom(false);
-export const openStarAFFiNEModalAtom = atom(false);
-export const openIssueFeedbackModalAtom = atom(false);
-export const openHistoryTipsModalAtom = atom(false);
-
 export const rightSidebarWidthAtom = atom(320);
 
-export type PlansScrollAnchor =
-  | 'aiPricingPlan'
-  | 'cloudPricingPlan'
-  | 'lifetimePricingPlan';
-export type SettingAtom = {
-  open: boolean;
-  workspaceMetadata?: SettingProps['workspaceMetadata'];
-} & (
-  | {
-      activeTab: 'plans';
-      scrollAnchor?: PlansScrollAnchor;
-    }
-  | { activeTab: Exclude<ActiveTab, 'plans'> }
-);
-
-export const openSettingModalAtom = atom<SettingAtom>({
-  activeTab: 'appearance',
-  open: false,
-});
+export const openImportModalAtom = atom(false);
 
 export type AuthAtomData =
   | { state: 'signIn' }

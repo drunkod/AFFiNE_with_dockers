@@ -1,3 +1,4 @@
+import { footnoteRegular, title3Regular } from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { style } from '@vanilla-extract/css';
 
@@ -5,18 +6,15 @@ export const searchHeader = style({
   padding: 16,
 });
 
-export const resTitle = style({
-  padding: '6px 16px',
-  marginBottom: 8,
-  height: 30,
-
-  fontSize: 13,
-  lineHeight: '18px',
-  fontWeight: 400,
-  letterSpacing: -0.08,
-
-  color: cssVarV2('text/secondary'),
-});
+export const resTitle = style([
+  footnoteRegular,
+  {
+    padding: '6px 16px',
+    marginBottom: 8,
+    height: 30,
+    color: cssVarV2('text/secondary'),
+  },
+]);
 
 export const resBlock = style({
   paddingBottom: 32,
@@ -26,14 +24,13 @@ export const resBlock = style({
     },
   },
 });
-export const resBlockTitle = style({
-  padding: '0 16px',
-  fontSize: 20,
-  lineHeight: '25px',
-  fontWeight: 400,
-  letterSpacing: -0.45,
-  color: cssVarV2('text/primary'),
-});
+export const resBlockTitle = style([
+  title3Regular,
+  {
+    padding: '0 16px',
+    color: cssVarV2('text/primary'),
+  },
+]);
 const resBlockContent = style({
   padding: '12px 0px',
 });
@@ -64,11 +61,10 @@ export const docCard = style({
   flexShrink: 0,
 });
 
-export const empty = style({
-  padding: '0 16px',
-  fontSize: 20,
-  fontWeight: 400,
-  lineHeight: '25px',
-  letterSpacing: -0.45,
-  color: cssVarV2('text/primary'),
-});
+export const empty = style([
+  title3Regular,
+  {
+    padding: '0 16px',
+    color: cssVarV2('text/primary'),
+  },
+]);

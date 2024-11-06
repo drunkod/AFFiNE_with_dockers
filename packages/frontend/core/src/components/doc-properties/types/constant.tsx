@@ -3,7 +3,9 @@ import {
   CheckBoxCheckLinearIcon,
   CreatedEditedIcon,
   DateTimeIcon,
+  EdgelessIcon,
   FileIcon,
+  HistoryIcon,
   NumberIcon,
   TagIcon,
   TextIcon,
@@ -12,8 +14,9 @@ import {
 
 import { CheckboxValue } from './checkbox';
 import { CreatedByValue, UpdatedByValue } from './created-updated-by';
-import { DateValue } from './date';
+import { CreateDateValue, DateValue, UpdatedDateValue } from './date';
 import { DocPrimaryModeValue } from './doc-primary-mode';
+import { EdgelessThemeValue } from './edgeless-theme';
 import { JournalValue } from './journal';
 import { NumberValue } from './number';
 import { TagsValue } from './tags';
@@ -21,54 +24,81 @@ import { TextValue } from './text';
 import type { PropertyValueProps } from './types';
 
 export const DocPropertyTypes = {
-  text: {
-    icon: TextIcon,
-    value: TextValue,
-    name: 'com.affine.page-properties.property.text',
-  },
-  number: {
-    icon: NumberIcon,
-    value: NumberValue,
-    name: 'com.affine.page-properties.property.number',
-  },
-  date: {
-    icon: DateTimeIcon,
-    value: DateValue,
-    name: 'com.affine.page-properties.property.date',
-  },
-  checkbox: {
-    icon: CheckBoxCheckLinearIcon,
-    value: CheckboxValue,
-    name: 'com.affine.page-properties.property.checkbox',
-  },
-  createdBy: {
-    icon: CreatedEditedIcon,
-    value: CreatedByValue,
-    name: 'com.affine.page-properties.property.createdBy',
-  },
-  updatedBy: {
-    icon: CreatedEditedIcon,
-    value: UpdatedByValue,
-    name: 'com.affine.page-properties.property.updatedBy',
-  },
   tags: {
     icon: TagIcon,
     value: TagsValue,
     name: 'com.affine.page-properties.property.tags',
     uniqueId: 'tags',
     renameable: false,
+    description: 'com.affine.page-properties.property.tags.tooltips',
+  },
+  text: {
+    icon: TextIcon,
+    value: TextValue,
+    name: 'com.affine.page-properties.property.text',
+    description: 'com.affine.page-properties.property.text.tooltips',
+  },
+  number: {
+    icon: NumberIcon,
+    value: NumberValue,
+    name: 'com.affine.page-properties.property.number',
+    description: 'com.affine.page-properties.property.number.tooltips',
+  },
+  checkbox: {
+    icon: CheckBoxCheckLinearIcon,
+    value: CheckboxValue,
+    name: 'com.affine.page-properties.property.checkbox',
+    description: 'com.affine.page-properties.property.checkbox.tooltips',
+  },
+  date: {
+    icon: DateTimeIcon,
+    value: DateValue,
+    name: 'com.affine.page-properties.property.date',
+    description: 'com.affine.page-properties.property.date.tooltips',
+  },
+  createdBy: {
+    icon: CreatedEditedIcon,
+    value: CreatedByValue,
+    name: 'com.affine.page-properties.property.createdBy',
+    description: 'com.affine.page-properties.property.createdBy.tooltips',
+  },
+  updatedBy: {
+    icon: CreatedEditedIcon,
+    value: UpdatedByValue,
+    name: 'com.affine.page-properties.property.updatedBy',
+    description: 'com.affine.page-properties.property.updatedBy.tooltips',
+  },
+  updatedAt: {
+    icon: DateTimeIcon,
+    value: UpdatedDateValue,
+    name: 'com.affine.page-properties.property.updatedAt',
+    description: 'com.affine.page-properties.property.updatedAt.tooltips',
+    renameable: false,
+  },
+  createdAt: {
+    icon: HistoryIcon,
+    value: CreateDateValue,
+    name: 'com.affine.page-properties.property.createdAt',
+    description: 'com.affine.page-properties.property.createdAt.tooltips',
+    renameable: false,
   },
   docPrimaryMode: {
     icon: FileIcon,
     value: DocPrimaryModeValue,
     name: 'com.affine.page-properties.property.docPrimaryMode',
+    description: 'com.affine.page-properties.property.docPrimaryMode.tooltips',
   },
   journal: {
     icon: TodayIcon,
     value: JournalValue,
     name: 'com.affine.page-properties.property.journal',
-    uniqueId: 'journal',
-    renameable: false,
+    description: 'com.affine.page-properties.property.journal.tooltips',
+  },
+  edgelessTheme: {
+    icon: EdgelessIcon,
+    value: EdgelessThemeValue,
+    name: 'com.affine.page-properties.property.edgelessTheme',
+    description: 'com.affine.page-properties.property.edgelessTheme.tooltips',
   },
 } as Record<
   string,
@@ -81,6 +111,7 @@ export const DocPropertyTypes = {
     uniqueId?: string;
     name: I18nString;
     renameable?: boolean;
+    description?: I18nString;
   }
 >;
 

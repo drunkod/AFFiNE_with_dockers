@@ -1,13 +1,13 @@
 import { notify, Skeleton } from '@affine/component';
 import { Button } from '@affine/component/ui/button';
 import { Menu, MenuItem, MenuTrigger } from '@affine/component/ui/menu';
-import { openSettingModalAtom } from '@affine/core/components/atoms';
 import {
   getSelectedNodes,
   useSharingUrl,
 } from '@affine/core/components/hooks/affine/use-share-url';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import { ServerConfigService } from '@affine/core/modules/cloud';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { EditorService } from '@affine/core/modules/editor';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
 import { ShareInfoService } from '@affine/core/modules/share-doc';
@@ -28,7 +28,6 @@ import {
 } from '@blocksuite/icons/rc';
 import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
-import { useSetAtom } from 'jotai';
 import { Suspense, useCallback, useEffect, useMemo } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -83,15 +82,14 @@ export const AFFiNESharePage = (props: ShareMenuProps) => {
 
   const permissionService = useService(WorkspacePermissionService);
   const isOwner = useLiveData(permissionService.permission.isOwner$);
-  const setSettingModalAtom = useSetAtom(openSettingModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
 
   const onOpenWorkspaceSettings = useCallback(() => {
-    setSettingModalAtom({
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'workspace:preference',
       workspaceMetadata: props.workspaceMetadata,
     });
-  }, [props.workspaceMetadata, setSettingModalAtom]);
+  }, [globalDialogService, props.workspaceMetadata]);
 
   const onClickAnyoneReadOnlyShare = useAsyncCallback(async () => {
     if (isSharedPage) {
@@ -172,8 +170,8 @@ export const AFFiNESharePage = (props: ShareMenuProps) => {
     onClickCopyLink('edgeless' as DocMode);
   }, [onClickCopyLink]);
   const onCopyBlockLink = useCallback(() => {
-    onClickCopyLink(undefined, blockIds, elementIds);
-  }, [onClickCopyLink, blockIds, elementIds]);
+    onClickCopyLink(currentMode, blockIds, elementIds);
+  }, [onClickCopyLink, currentMode, blockIds, elementIds]);
 
   if (isLoading) {
     // TODO(@eyhn): loading and error UI

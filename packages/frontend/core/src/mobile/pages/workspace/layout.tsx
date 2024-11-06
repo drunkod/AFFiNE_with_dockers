@@ -1,7 +1,13 @@
 import { AffineErrorBoundary } from '@affine/core/components/affine/affine-error-boundary';
-import { AppFallback } from '@affine/core/components/affine/app-container';
-import { WorkspaceLayoutProviders } from '@affine/core/components/layouts/workspace-layout';
+import { AiLoginRequiredModal } from '@affine/core/components/affine/auth/ai-login-required';
+import {
+  CloudQuotaModal,
+  LocalQuotaModal,
+} from '@affine/core/components/affine/quota-reached-modal';
 import { SWRConfigProvider } from '@affine/core/components/providers/swr-config-provider';
+import { WorkspaceSideEffects } from '@affine/core/components/providers/workspace-side-effects';
+import { PeekViewManagerModal } from '@affine/core/modules/peek-view';
+import { WorkspaceFlavour } from '@affine/env/workspace';
 import type { Workspace, WorkspaceMetadata } from '@toeverything/infra';
 import {
   FrameworkScope,
@@ -17,7 +23,8 @@ import {
   useState,
 } from 'react';
 
-import { MobileCurrentWorkspaceModals } from '../../provider/model-provider';
+import { AppFallback } from '../../components';
+import { WorkspaceDialogs } from '../../dialogs';
 
 // TODO(@forehalo): reuse the global context with [core/electron]
 declare global {
@@ -84,19 +91,24 @@ export const WorkspaceLayout = ({
   }
 
   if (!isRootDocReady) {
-    return (
-      <FrameworkScope scope={workspace.scope}>
-        <AppFallback />
-      </FrameworkScope>
-    );
+    return <AppFallback />;
   }
 
   return (
     <FrameworkScope scope={workspace.scope}>
       <AffineErrorBoundary height="100dvh">
         <SWRConfigProvider>
-          <MobileCurrentWorkspaceModals />
-          <WorkspaceLayoutProviders>{children}</WorkspaceLayoutProviders>
+          <WorkspaceDialogs />
+
+          {/* ---- some side-effect components ---- */}
+          <PeekViewManagerModal />
+          {workspace?.flavour === WorkspaceFlavour.LOCAL && <LocalQuotaModal />}
+          {workspace?.flavour === WorkspaceFlavour.AFFINE_CLOUD && (
+            <CloudQuotaModal />
+          )}
+          <AiLoginRequiredModal />
+          <WorkspaceSideEffects />
+          {children}
         </SWRConfigProvider>
       </AffineErrorBoundary>
     </FrameworkScope>

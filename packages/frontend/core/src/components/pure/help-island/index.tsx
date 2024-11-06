@@ -1,17 +1,17 @@
 import { Tooltip } from '@affine/component/ui/tooltip';
-import { popupWindow } from '@affine/core/utils';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
+import type { SettingTab } from '@affine/core/modules/dialogs/constant';
+import { UrlService } from '@affine/core/modules/url';
 import { useI18n } from '@affine/i18n';
 import { CloseIcon, NewIcon } from '@blocksuite/icons/rc';
 import {
   GlobalContextService,
   useLiveData,
+  useService,
   useServices,
 } from '@toeverything/infra';
-import { useSetAtom } from 'jotai/react';
 import { useCallback, useState } from 'react';
 
-import type { SettingProps } from '../../affine/setting-modal';
-import { openSettingModalAtom } from '../../atoms';
 import { ContactIcon, HelpIcon, KeyboardIcon } from './icons';
 import {
   StyledAnimateWrapper,
@@ -34,24 +34,24 @@ const showList = BUILD_CONFIG.isElectron
   : DEFAULT_SHOW_LIST;
 
 export const HelpIsland = () => {
-  const { globalContextService } = useServices({
+  const { globalContextService, urlService } = useServices({
     GlobalContextService,
+    UrlService,
   });
   const docId = useLiveData(globalContextService.globalContext.docId.$);
   const docMode = useLiveData(globalContextService.globalContext.docMode.$);
-  const setOpenSettingModalAtom = useSetAtom(openSettingModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
   const [spread, setShowSpread] = useState(false);
   const t = useI18n();
   const openSettingModal = useCallback(
-    (tab: SettingProps['activeTab']) => {
+    (tab: SettingTab) => {
       setShowSpread(false);
 
-      setOpenSettingModalAtom({
-        open: true,
+      globalDialogService.open('setting', {
         activeTab: tab,
       });
     },
-    [setOpenSettingModalAtom]
+    [globalDialogService]
   );
   const openAbout = useCallback(
     () => openSettingModal('about'),
@@ -79,7 +79,7 @@ export const HelpIsland = () => {
             <StyledIconWrapper
               data-testid="right-bottom-change-log-icon"
               onClick={() => {
-                popupWindow(BUILD_CONFIG.changelogUrl);
+                urlService.openPopupWindow(BUILD_CONFIG.changelogUrl);
               }}
             >
               <NewIcon />

@@ -92,7 +92,6 @@ test('Collapse Sidebar', async ({ page }) => {
   await page
     .locator('[data-testid=app-sidebar-arrow-button-collapse][data-show=true]')
     .click();
-  await page.mouse.move(500, 500);
   const sliderBarArea = page.getByTestId('app-sidebar');
   await expect(sliderBarArea).not.toBeInViewport();
 });
@@ -101,8 +100,7 @@ test('Expand Sidebar', async ({ page }) => {
   await page
     .locator('[data-testid=app-sidebar-arrow-button-collapse][data-show=true]')
     .click();
-  await page.mouse.move(500, 500);
-  const sliderBarArea = page.getByTestId('sliderBar-inner');
+  const sliderBarArea = page.getByTestId('app-sidebar');
   await expect(sliderBarArea).not.toBeInViewport();
 
   await page

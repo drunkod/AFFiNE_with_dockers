@@ -20,9 +20,7 @@ type KeyboardShortcutsI18NKeys =
   | 'text'
   | 'shape'
   | 'image'
-  | 'straightConnector'
-  | 'elbowedConnector'
-  | 'curveConnector'
+  | 'connector'
   | 'pen'
   | 'hand'
   | 'note'
@@ -122,10 +120,7 @@ export const useMacEdgelessKeyboardShortcuts = (): ShortcutMap => {
       [t('text')]: ['T'],
       [t('shape')]: ['S'],
       [t('image')]: ['I'],
-      [t('straightConnector')]: ['L'],
-      [t('elbowedConnector')]: ['X'],
-      // not implement yet
-      // [t('curveConnector')]: 'C',
+      [t('connector')]: ['C'],
       [t('pen')]: ['P'],
       [t('hand')]: ['H'],
       [t('note')]: ['N'],
@@ -151,10 +146,7 @@ export const useWinEdgelessKeyboardShortcuts = (): ShortcutMap => {
       [t('text')]: ['T'],
       [t('shape')]: ['S'],
       [t('image')]: ['I'],
-      [t('straightConnector')]: ['L'],
-      [t('elbowedConnector')]: ['X'],
-      // not implement yet
-      // [t('curveConnector')]: 'C',
+      [t('connector')]: ['C'],
       [t('pen')]: ['P'],
       [t('hand')]: ['H'],
       [t('note')]: ['N'],

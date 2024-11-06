@@ -8,6 +8,7 @@ import {
 } from '@affine/component';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import { useNavigateHelper } from '@affine/core/components/hooks/use-navigate-helper';
+import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import type { Tag } from '@affine/core/modules/tag';
 import { TagService } from '@affine/core/modules/tag';
 import { isNewTabTrigger } from '@affine/core/utils';
@@ -28,18 +29,13 @@ import {
   WorkspaceService,
 } from '@toeverything/infra';
 import clsx from 'clsx';
-import { nanoid } from 'nanoid';
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { CollectionService } from '../../../modules/collection';
 import { usePageHelper } from '../../blocksuite/block-suite-page-list/utils';
 import { createTagFilter } from '../filter/utils';
-import { createEmptyCollection } from '../use-collection-manager';
-import {
-  useEditCollection,
-  useEditCollectionName,
-} from '../view/use-edit-collection';
+import { SaveAsCollectionButton } from '../view';
 import * as styles from './page-list-header.css';
 import { PageListNewPageButton } from './page-list-new-page-button';
 
@@ -102,21 +98,22 @@ export const CollectionPageListHeader = ({
 }) => {
   const t = useI18n();
   const { jumpToCollections } = useNavigateHelper();
-  const { collectionService, workspaceService } = useServices({
-    CollectionService,
-    WorkspaceService,
-  });
+  const { collectionService, workspaceService, workspaceDialogService } =
+    useServices({
+      CollectionService,
+      WorkspaceService,
+      WorkspaceDialogService,
+    });
 
   const handleJumpToCollections = useCallback(() => {
     jumpToCollections(workspaceId);
   }, [jumpToCollections, workspaceId]);
 
-  const { open } = useEditCollection();
-
-  const handleEdit = useAsyncCallback(async () => {
-    const ret = await open({ ...collection }, 'page');
-    collectionService.updateCollection(collection.id, () => ret);
-  }, [collection, collectionService, open]);
+  const handleEdit = useCallback(() => {
+    workspaceDialogService.open('collection-editor', {
+      collectionId: collection.id,
+    });
+  }, [collection, workspaceDialogService]);
 
   const workspace = workspaceService.workspace;
   const { createEdgeless, createPage } = usePageHelper(workspace.docCollection);
@@ -203,10 +200,6 @@ export const TagPageListHeader = ({
   const { jumpToTags, jumpToCollection } = useNavigateHelper();
   const collectionService = useService(CollectionService);
   const [openMenu, setOpenMenu] = useState(false);
-  const { open } = useEditCollectionName({
-    title: t['com.affine.editCollection.saveCollection'](),
-    showTips: true,
-  });
 
   const handleJumpToTags = useCallback(() => {
     jumpToTags(workspaceId);
@@ -222,15 +215,6 @@ export const TagPageListHeader = ({
     },
     [collectionService, tag.id, jumpToCollection, workspaceId]
   );
-  const handleClick = useCallback(() => {
-    open('')
-      .then(name => {
-        return saveToCollection(createEmptyCollection(nanoid(), { name }));
-      })
-      .catch(err => {
-        console.error(err);
-      });
-  }, [open, saveToCollection]);
 
   return (
     <div className={styles.docListHeader}>
@@ -267,9 +251,7 @@ export const TagPageListHeader = ({
           </div>
         </Menu>
       </div>
-      <Button onClick={handleClick}>
-        {t['com.affine.editCollection.saveCollection']()}
-      </Button>
+      <SaveAsCollectionButton onConfirm={saveToCollection} />
     </div>
   );
 };

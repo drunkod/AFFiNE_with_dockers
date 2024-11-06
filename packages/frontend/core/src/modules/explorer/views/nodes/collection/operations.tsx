@@ -73,15 +73,8 @@ export const useExplorerCollectionNodeOperations = (
     track.$.navigationPanel.collections.addDocToCollection({
       control: 'button',
     });
-    workbenchService.workbench.openDoc(newDoc.id);
     onOpenCollapsed();
-  }, [
-    collectionId,
-    collectionService,
-    createPage,
-    onOpenCollapsed,
-    workbenchService.workbench,
-  ]);
+  }, [collectionId, collectionService, createPage, onOpenCollapsed]);
 
   const handleToggleFavoriteCollection = useCallback(() => {
     compatibleFavoriteItemsAdapter.toggle(collectionId, 'collection');

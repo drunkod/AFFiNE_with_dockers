@@ -8,23 +8,16 @@ import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { WorkbenchService } from '@affine/core/modules/workbench';
 import { isNewTabTrigger } from '@affine/core/utils';
 import { useI18n } from '@affine/i18n';
-import type { DocCollection } from '@blocksuite/affine/store';
 import { TodayIcon } from '@blocksuite/icons/rc';
 import { useLiveData, useService } from '@toeverything/infra';
 import { type MouseEvent } from 'react';
 
-interface AppSidebarJournalButtonProps {
-  docCollection: DocCollection;
-}
-
-export const AppSidebarJournalButton = ({
-  docCollection,
-}: AppSidebarJournalButtonProps) => {
+export const AppSidebarJournalButton = () => {
   const t = useI18n();
   const docDisplayMetaService = useService(DocDisplayMetaService);
   const workbench = useService(WorkbenchService).workbench;
   const location = useLiveData(workbench.location$);
-  const { openToday } = useJournalRouteHelper(docCollection);
+  const { openToday } = useJournalRouteHelper();
   const maybeDocId = location.pathname.split('/')[1];
   const { isJournal } = useJournalInfoHelper(maybeDocId);
 

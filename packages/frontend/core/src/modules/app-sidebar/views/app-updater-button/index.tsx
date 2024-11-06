@@ -1,6 +1,6 @@
 import { Tooltip } from '@affine/component';
 import { useCatchEventCallback } from '@affine/core/components/hooks/use-catch-event-hook';
-import { popupWindow } from '@affine/core/utils';
+import { UrlService } from '@affine/core/modules/url';
 import { Unreachable } from '@affine/env/constant';
 import { useI18n } from '@affine/i18n';
 import {
@@ -9,6 +9,7 @@ import {
   NewIcon,
   ResetIcon,
 } from '@blocksuite/icons/rc';
+import { useService } from '@toeverything/infra';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
@@ -186,6 +187,7 @@ export function AppUpdaterButton({
   className,
   style,
 }: AddPageButtonProps) {
+  const urlService = useService(UrlService);
   const handleClick = useCallback(() => {
     if (updateReady) {
       onQuitAndInstall();
@@ -197,7 +199,7 @@ export function AppUpdaterButton({
           onDownloadUpdate();
         }
       } else {
-        popupWindow(
+        urlService.openPopupWindow(
           `https://github.com/toeverything/AFFiNE/releases/tag/v${updateAvailable.version}`
         );
       }
@@ -213,6 +215,7 @@ export function AppUpdaterButton({
     onQuitAndInstall,
     autoDownload,
     onDownloadUpdate,
+    urlService,
     onOpenChangelog,
   ]);
 

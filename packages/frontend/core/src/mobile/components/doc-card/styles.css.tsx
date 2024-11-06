@@ -1,3 +1,7 @@
+import {
+  bodyEmphasized,
+  footnoteRegular,
+} from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { style } from '@vanilla-extract/css';
 
@@ -23,30 +27,26 @@ export const head = style({
   justifyContent: 'space-between',
   gap: 8,
 });
-export const title = style({
-  width: 0,
-  flex: 1,
-  fontSize: 17,
-  lineHeight: '22px',
-  fontWeight: 600,
-  letterSpacing: -0.43,
-
-  whiteSpace: 'nowrap',
-  textOverflow: 'ellipsis',
-  overflow: 'hidden',
-});
+export const title = style([
+  bodyEmphasized,
+  {
+    width: 0,
+    flex: 1,
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  },
+]);
 export const untitled = style({
   opacity: 0.4,
 });
-export const content = style({
-  fontSize: 13,
-  lineHeight: '18px',
-  fontWeight: 400,
-  letterSpacing: -0.08,
-  flex: 1,
-
-  overflow: 'hidden',
-});
+export const content = style([
+  footnoteRegular,
+  {
+    flex: 1,
+    overflow: 'hidden',
+  },
+]);
 
 export const contentEmpty = style({
   opacity: 0.3,

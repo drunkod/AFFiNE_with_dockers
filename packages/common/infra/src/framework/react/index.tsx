@@ -4,9 +4,6 @@ import type { FrameworkProvider, Scope, Service } from '../core';
 import { ComponentNotFoundError, Framework } from '../core';
 import { parseIdentifier } from '../core/identifier';
 import type { GeneralIdentifier, IdentifierType, Type } from '../core/types';
-import { MountPoint } from './scope-root-components';
-
-export { useMount } from './scope-root-components';
 
 export const FrameworkStackContext = React.createContext<FrameworkProvider[]>([
   Framework.EMPTY.provider(),
@@ -23,7 +20,7 @@ export function useService<T extends Service>(
 ): T {
   const stack = useContext(FrameworkStackContext);
 
-  let service: T | null = null;
+  let service: T | undefined = undefined;
 
   for (let i = stack.length - 1; i >= 0; i--) {
     service = stack[i].getOptional(identifier, {
@@ -87,10 +84,10 @@ export function useServices<
 
 export function useServiceOptional<T extends Service>(
   identifier: Type<T>
-): T | null {
+): T | undefined {
   const stack = useContext(FrameworkStackContext);
 
-  let service: T | null = null;
+  let service: T | undefined = undefined;
 
   for (let i = stack.length - 1; i >= 0; i--) {
     service = stack[i].getOptional(identifier, {
@@ -129,7 +126,7 @@ export const FrameworkScope = ({
 
   return (
     <FrameworkStackContext.Provider value={nextStack}>
-      <MountPoint>{children}</MountPoint>
+      {children}
     </FrameworkStackContext.Provider>
   );
 };

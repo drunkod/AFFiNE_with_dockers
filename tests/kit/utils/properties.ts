@@ -30,7 +30,20 @@ export const openTagsEditor = async (page: Page) => {
 };
 
 export const closeTagsEditor = async (page: Page) => {
-  await page.keyboard.press('Escape');
+  if (
+    await page
+      .getByTestId('info-modal')
+      .getByTestId('info-modal-title')
+      .isVisible()
+  ) {
+    // if the info modal is open, we need to use click outside to close the tag editor
+    await page
+      .getByTestId('info-modal')
+      .getByTestId('info-modal-title')
+      .click();
+  } else {
+    await page.keyboard.press('Escape');
+  }
   await expect(page.getByTestId('tags-editor-popup')).not.toBeVisible();
 };
 
@@ -131,7 +144,7 @@ export const addCustomProperty = async (
     .click();
   if (await page.getByTestId('edit-property-menu-item').isVisible()) {
     // is edit property menu opened, close it
-    await page.keyboard.press('Escape');
+    await closeTagsEditor(page);
   }
   await page.waitForTimeout(500);
 };
@@ -152,7 +165,7 @@ export const openWorkspaceProperties = async (page: Page) => {
   await page
     .locator('[data-testid="workspace-list-item"] .setting-name')
     .click();
-  await page.getByTestId('workspace-list-item-properties').click();
+  await page.getByTestId('workspace-list-item-workspace:properties').click();
 };
 
 export const selectVisibilitySelector = async (

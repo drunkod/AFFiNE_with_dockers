@@ -1,7 +1,10 @@
 import { Divider, Scrollable } from '@affine/component';
-import { DocPropertiesTable } from '@affine/core/components/doc-properties';
-import { LinksRow } from '@affine/core/components/doc-properties/info-modal/links-row';
-import { TimeRow } from '@affine/core/components/doc-properties/info-modal/time-row';
+import {
+  type DefaultOpenProperty,
+  DocPropertiesTable,
+} from '@affine/core/components/doc-properties';
+import { LinksRow } from '@affine/core/desktop/dialogs/doc-info/links-row';
+import { TimeRow } from '@affine/core/desktop/dialogs/doc-info/time-row';
 import { DocsSearchService } from '@affine/core/modules/docs-search';
 import { useI18n } from '@affine/i18n';
 import { LiveData, useLiveData, useService } from '@toeverything/infra';
@@ -9,7 +12,13 @@ import { Suspense, useMemo } from 'react';
 
 import * as styles from './doc-info.css';
 
-export const DocInfoSheet = ({ docId }: { docId: string }) => {
+export const DocInfoSheet = ({
+  docId,
+  defaultOpenProperty,
+}: {
+  docId: string;
+  defaultOpenProperty?: DefaultOpenProperty;
+}) => {
   const docsSearchService = useService(DocsSearchService);
   const t = useI18n();
 
@@ -52,7 +61,7 @@ export const DocInfoSheet = ({ docId }: { docId: string }) => {
               <Divider size="thinner" />
             </>
           ) : null}
-          <DocPropertiesTable />
+          <DocPropertiesTable defaultOpenProperty={defaultOpenProperty} />
         </Suspense>
       </Scrollable.Viewport>
       <Scrollable.Scrollbar className={styles.scrollBar} />

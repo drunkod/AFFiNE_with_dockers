@@ -8,7 +8,6 @@ import { PageNotFound } from '@affine/core/desktop/pages/404';
 import { EditorService } from '@affine/core/modules/editor';
 import { DebugLogger } from '@affine/debug';
 import {
-  type DocMode,
   type EdgelessRootService,
   RefNodeSlotsProvider,
 } from '@blocksuite/affine/blocks';
@@ -24,6 +23,7 @@ import clsx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
 import { WorkbenchService } from '../../../workbench';
+import type { DocReferenceInfo } from '../../entities/peek-view';
 import { PeekViewService } from '../../services/peek-view';
 import { useEditor } from '../utils';
 import * as styles from './doc-peek-view.css';
@@ -81,6 +81,7 @@ function DocPeekPreviewEditor({
   const doc = editor.doc;
   const workspace = editor.doc.workspace;
   const mode = useLiveData(editor.mode$);
+  const defaultOpenProperty = useLiveData(editor.defaultOpenProperty$);
   const workbench = useService(WorkbenchService).workbench;
   const peekView = useService(PeekViewService).peekView;
   const editorElement = useLiveData(editor.editorContainer$);
@@ -96,18 +97,17 @@ function DocPeekPreviewEditor({
       if (!refNodeSlots) return;
       // doc change event inside peek view should be handled by peek view
       disposableGroup.add(
+        // todo(@pengx17): seems not working
         refNodeSlots.docLinkClicked.on(options => {
           peekView
             .open({
-              type: 'doc',
-              docId: options.pageId,
+              docRef: { docId: options.pageId },
               ...options.params,
             })
             .catch(console.error);
         })
       );
 
-      editor.setEditorContainer(editorContainer);
       const unbind = editor.bindEditorContainer(
         editorContainer,
         (editorContainer as any).title
@@ -119,7 +119,6 @@ function DocPeekPreviewEditor({
 
       return () => {
         unbind();
-        editor.setEditorContainer(null);
         disposableGroup.dispose();
       };
     },
@@ -158,6 +157,7 @@ function DocPeekPreviewEditor({
             mode={mode}
             page={doc.blockSuiteDoc}
             onEditorReady={handleOnEditorReady}
+            defaultOpenProperty={defaultOpenProperty}
           />
         </Scrollable.Viewport>
         <Scrollable.Scrollbar />
@@ -171,23 +171,24 @@ function DocPeekPreviewEditor({
   );
 }
 
-export function DocPeekPreview({
-  docId,
-  blockIds,
-  elementIds,
-  mode,
-  xywh,
-}: {
-  docId: string;
-  blockIds?: string[];
-  elementIds?: string[];
-  mode?: DocMode;
-  xywh?: `[${number},${number},${number},${number}]`;
-}) {
-  const { doc, editor, loading } = useEditor(docId, mode, {
-    blockIds,
-    elementIds,
-  });
+export function DocPeekPreview({ docRef }: { docRef: DocReferenceInfo }) {
+  const { docId, blockIds, elementIds, mode, xywh, databaseId, databaseRowId } =
+    docRef;
+  const { doc, editor, loading } = useEditor(
+    docId,
+    mode,
+    {
+      blockIds,
+      elementIds,
+    },
+    databaseId && databaseRowId
+      ? {
+          databaseId,
+          databaseRowId,
+          type: 'database',
+        }
+      : undefined
+  );
 
   // if sync engine has been synced and the page is null, show 404 page.
   if (!doc || !editor) {

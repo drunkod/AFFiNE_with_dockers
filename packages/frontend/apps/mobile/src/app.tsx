@@ -1,11 +1,11 @@
-import { AffineContext } from '@affine/component/context';
-import { AppFallback } from '@affine/core/components/affine/app-container';
-import { Telemetry } from '@affine/core/components/telemetry';
+import { AffineContext } from '@affine/core/components/context';
+import { AppFallback } from '@affine/core/mobile/components';
 import { configureMobileModules } from '@affine/core/mobile/modules';
 import { router } from '@affine/core/mobile/router';
 import { configureCommonModules } from '@affine/core/modules';
 import { I18nProvider } from '@affine/core/modules/i18n';
 import { configureLocalStorageStateStorageImpls } from '@affine/core/modules/storage';
+import { PopupWindowProvider } from '@affine/core/modules/url';
 import { configureIndexedDBUserspaceStorageProvider } from '@affine/core/modules/userspace';
 import { configureBrowserWorkbenchModule } from '@affine/core/modules/workbench';
 import {
@@ -33,6 +33,25 @@ configureBrowserWorkspaceFlavours(framework);
 configureIndexedDBWorkspaceEngineStorageProvider(framework);
 configureIndexedDBUserspaceStorageProvider(framework);
 configureMobileModules(framework);
+framework.impl(PopupWindowProvider, {
+  open: (target: string) => {
+    const targetUrl = new URL(target);
+
+    let url: string;
+    // safe to open directly if in the same origin
+    if (targetUrl.origin === location.origin) {
+      url = target;
+    } else {
+      const redirectProxy = location.origin + '/redirect-proxy';
+      const search = new URLSearchParams({
+        redirect_uri: target,
+      });
+
+      url = `${redirectProxy}?${search.toString()}`;
+    }
+    window.open(url, '_blank', 'noreferrer noopener');
+  },
+});
 const frameworkProvider = framework.provider();
 
 // setup application lifecycle events, and emit application start event
@@ -47,7 +66,6 @@ export function App() {
       <FrameworkRoot framework={frameworkProvider}>
         <I18nProvider>
           <AffineContext store={getCurrentStore()}>
-            <Telemetry />
             <RouterProvider
               fallbackElement={<AppFallback />}
               router={router}

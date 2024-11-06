@@ -172,22 +172,6 @@ export function createApplicationMenu() {
           },
         },
         {
-          label: 'Switch to next tab (mac)',
-          accelerator: 'Command+]',
-          visible: false,
-          click: () => {
-            switchToNextTab();
-          },
-        },
-        {
-          label: 'Switch to previous tab (mac)',
-          accelerator: 'Command+[',
-          visible: false,
-          click: () => {
-            switchToPreviousTab();
-          },
-        },
-        {
           label: 'Switch to next tab (mac 2)',
           accelerator: 'Alt+Command+]',
           visible: false,

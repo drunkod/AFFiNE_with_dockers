@@ -12,12 +12,14 @@ export function getBuildConfig(buildFlags: BuildFlags): BUILD_CONFIG_TYPE {
         isDesktopEdition: (
           ['web', 'desktop', 'admin'] as BuildFlags['distribution'][]
         ).includes(buildFlags.distribution),
-        isMobileEdition: (['mobile'] as BuildFlags['distribution'][]).includes(
-          buildFlags.distribution
-        ),
+        isMobileEdition: (
+          ['mobile', 'ios', 'android'] as BuildFlags['distribution'][]
+        ).includes(buildFlags.distribution),
         isElectron: buildFlags.distribution === 'desktop',
         isWeb: buildFlags.distribution === 'web',
         isMobileWeb: buildFlags.distribution === 'mobile',
+        isIOS: buildFlags.distribution === 'ios',
+        isAndroid: buildFlags.distribution === 'android',
 
         isSelfHosted: process.env.SELF_HOSTED === 'true',
         appBuildType: 'stable' as const,

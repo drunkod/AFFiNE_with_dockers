@@ -6,9 +6,10 @@ import { buildType, isDev } from './config';
 import { logger } from './logger';
 import { uiSubjects } from './ui';
 import {
+  addTabWithUrl,
   getMainWindow,
+  loadUrlInActiveTab,
   openUrlInHiddenWindow,
-  openUrlInMainWindow,
   showMainWindow,
 } from './windows-manager';
 
@@ -29,11 +30,15 @@ export function setupDeepLink(app: App) {
   }
 
   app.on('open-url', (event, url) => {
+    logger.log('open-url', url);
     if (url.startsWith(`${protocol}://`)) {
       event.preventDefault();
-      handleAffineUrl(url).catch(e => {
-        logger.error('failed to handle affine url', e);
-      });
+      app
+        .whenReady()
+        .then(() => handleAffineUrl(url))
+        .catch(e => {
+          logger.error('failed to handle affine url', e);
+        });
     }
   });
 
@@ -55,6 +60,18 @@ export function setupDeepLink(app: App) {
         }
       })
       .catch(e => console.error('Failed to restore or create window:', e));
+  });
+
+  app.on('ready', () => {
+    // app may be brought up without having a running instance
+    // need to read the url from the command line
+    const url = process.argv.at(-1);
+    logger.log('url from argv', process.argv, url);
+    if (url?.startsWith(`${protocol}://`)) {
+      handleAffineUrl(url).catch(e => {
+        logger.error('failed to handle affine url', e);
+      });
+    }
   });
 }
 
@@ -81,10 +98,17 @@ async function handleAffineUrl(url: string) {
       method,
       payload,
     });
+  } else if (
+    urlObj.searchParams.get('new-tab') &&
+    urlObj.pathname.startsWith('/workspace')
+  ) {
+    // @todo(@forehalo): refactor router utilities
+    // basename of /workspace/xxx/yyy is /workspace/xxx
+    await addTabWithUrl(url);
   } else {
     const hiddenWindow = urlObj.searchParams.get('hidden')
       ? await openUrlInHiddenWindow(urlObj)
-      : await openUrlInMainWindow(urlObj);
+      : await loadUrlInActiveTab(url);
 
     const main = await getMainWindow();
     if (main && hiddenWindow) {

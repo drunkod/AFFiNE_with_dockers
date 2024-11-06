@@ -1,13 +1,14 @@
+// todo(@pengx17): remove jotai
+import { UrlService } from '@affine/core/modules/url';
 import type { UpdateMeta } from '@affine/electron-api';
 import { apis, events } from '@affine/electron-api';
 import { track } from '@affine/track';
-import { appSettingAtom } from '@toeverything/infra';
+import { appSettingAtom, useService } from '@toeverything/infra';
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { atomWithObservable, atomWithStorage } from 'jotai/utils';
 import { useCallback, useState } from 'react';
 import { Observable } from 'rxjs';
 
-import { popupWindow } from '../../utils';
 import { useAsyncCallback } from './affine-async-hooks';
 
 function rpcToObservable<
@@ -104,6 +105,7 @@ const currentChangelogUnreadAtom = atom(
 export const useAppUpdater = () => {
   const [appQuitting, setAppQuitting] = useState(false);
   const updateReady = useAtomValue(updateReadyAtom);
+  const urlService = useService(UrlService);
   const [setting, setSetting] = useAtom(appSettingAtom);
   const downloadProgress = useAtomValue(downloadProgressAtom);
   const [changelogUnread, setChangelogUnread] = useAtom(
@@ -177,9 +179,9 @@ export const useAppUpdater = () => {
 
   const openChangelog = useAsyncCallback(async () => {
     track.$.navigationPanel.bottomButtons.openChangelog();
-    popupWindow(BUILD_CONFIG.changelogUrl);
+    urlService.openPopupWindow(BUILD_CONFIG.changelogUrl);
     await setChangelogUnread(true);
-  }, [setChangelogUnread]);
+  }, [setChangelogUnread, urlService]);
 
   const dismissChangelog = useAsyncCallback(async () => {
     track.$.navigationPanel.bottomButtons.dismissChangelog();

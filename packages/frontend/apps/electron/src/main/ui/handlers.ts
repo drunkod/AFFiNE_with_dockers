@@ -21,11 +21,13 @@ import {
   pingAppLayoutReady,
   showDevTools,
   showTab,
+  updateActiveViewMeta,
   updateWorkbenchMeta,
   updateWorkbenchViewMeta,
 } from '../windows-manager';
 import { showTabContextMenu } from '../windows-manager/context-menu';
 import { getOrCreateCustomThemeWindow } from '../windows-manager/custom-theme-window';
+import type { WorkbenchViewMeta } from '../windows-manager/tab-views-meta-schema';
 import { getChallengeResponse } from './challenge';
 import { uiSubjects } from './subject';
 
@@ -173,6 +175,9 @@ export const uiHandlers = {
   getTabViewsMeta: async () => {
     return getTabViewsMeta();
   },
+  updateActiveViewMeta: async (e, meta: Partial<WorkbenchViewMeta>) => {
+    return updateActiveViewMeta(e.sender, meta);
+  },
   getTabsStatus: async () => {
     return getTabsStatus();
   },
@@ -197,8 +202,8 @@ export const uiHandlers = {
       uiSubjects.onToggleRightSidebar$.next(tabId);
     }
   },
-  pingAppLayoutReady: async e => {
-    pingAppLayoutReady(e.sender);
+  pingAppLayoutReady: async (e, ready = true) => {
+    pingAppLayoutReady(e.sender, ready);
   },
   showDevTools: async (_, ...args: Parameters<typeof showDevTools>) => {
     return showDevTools(...args);

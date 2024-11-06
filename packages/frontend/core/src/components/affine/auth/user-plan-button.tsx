@@ -1,16 +1,15 @@
 import { Tooltip } from '@affine/component/ui/tooltip';
 import { useCatchEventCallback } from '@affine/core/components/hooks/use-catch-event-hook';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { SubscriptionPlan } from '@affine/graphql';
 import { useI18n } from '@affine/i18n';
-import { useLiveData, useServices } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
+import { useLiveData, useService, useServices } from '@toeverything/infra';
 import { useEffect } from 'react';
 
 import {
   ServerConfigService,
   SubscriptionService,
 } from '../../../modules/cloud';
-import { openSettingModalAtom } from '../../atoms';
 import * as styles from './style.css';
 
 export const UserPlanButton = () => {
@@ -35,14 +34,13 @@ export const UserPlanButton = () => {
     subscriptionService.subscription.revalidate();
   }, [subscriptionService]);
 
-  const setSettingModalAtom = useSetAtom(openSettingModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
   const handleClick = useCatchEventCallback(() => {
-    setSettingModalAtom({
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'plans',
       scrollAnchor: 'cloudPricingPlan',
     });
-  }, [setSettingModalAtom]);
+  }, [globalDialogService]);
 
   const t = useI18n();
 

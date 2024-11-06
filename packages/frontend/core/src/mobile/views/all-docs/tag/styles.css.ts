@@ -1,3 +1,4 @@
+import { bodyEmphasized } from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { style } from '@vanilla-extract/css';
 
@@ -19,20 +20,17 @@ export const item = style({
     },
   },
 });
-export const content = style({
-  width: 0,
-  flex: 1,
-
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-
-  color: cssVarV2('text/primary'),
-  fontSize: 17,
-  fontWeight: 600,
-  lineHeight: '24px',
-  letterSpacing: -0.43,
-});
+export const content = style([
+  bodyEmphasized,
+  {
+    width: 0,
+    flex: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    color: cssVarV2('text/primary'),
+  },
+]);
 
 export const prefixIcon = style({
   width: 24,

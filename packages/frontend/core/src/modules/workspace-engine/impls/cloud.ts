@@ -32,6 +32,7 @@ import { applyUpdate, encodeStateAsUpdate } from 'yjs';
 
 import type {
   AuthService,
+  FetchService,
   GraphQLService,
   WebSocketService,
 } from '../../cloud';
@@ -59,7 +60,8 @@ export class CloudWorkspaceFlavourProviderService
     private readonly authService: AuthService,
     private readonly storageProvider: WorkspaceEngineStorageProvider,
     private readonly graphqlService: GraphQLService,
-    private readonly webSocketService: WebSocketService
+    private readonly webSocketService: WebSocketService,
+    private readonly fetchService: FetchService
   ) {
     super();
   }
@@ -200,7 +202,7 @@ export class CloudWorkspaceFlavourProviderService
     // get information from both cloud and local storage
 
     // we use affine 'static' storage here, which use http protocol, no need to websocket.
-    const cloudStorage = new CloudStaticDocStorage(id);
+    const cloudStorage = new CloudStaticDocStorage(id, this.fetchService);
     const docStorage = this.storageProvider.getDocStorage(id);
     // download root doc
     const localData = await docStorage.doc.get(id);
@@ -235,7 +237,11 @@ export class CloudWorkspaceFlavourProviderService
       return localBlob;
     }
 
-    const cloudBlob = new CloudBlobStorage(id);
+    const cloudBlob = new CloudBlobStorage(
+      id,
+      this.fetchService,
+      this.graphqlService
+    );
     return await cloudBlob.get(blob);
   }
   getEngineProvider(workspaceId: string): WorkspaceEngineProvider {
@@ -255,8 +261,15 @@ export class CloudWorkspaceFlavourProviderService
       getLocalBlobStorage: () => {
         return this.storageProvider.getBlobStorage(workspaceId);
       },
-      getRemoteBlobStorages() {
-        return [new CloudBlobStorage(workspaceId), new StaticBlobStorage()];
+      getRemoteBlobStorages: () => {
+        return [
+          new CloudBlobStorage(
+            workspaceId,
+            this.fetchService,
+            this.graphqlService
+          ),
+          new StaticBlobStorage(),
+        ];
       },
     };
   }

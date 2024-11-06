@@ -16,6 +16,7 @@ import { use } from 'foxact/use';
 import type { CSSProperties } from 'react';
 import { Suspense, useEffect } from 'react';
 
+import type { DefaultOpenProperty } from '../../doc-properties';
 import { BlocksuiteEditorContainer } from './blocksuite-editor-container';
 import { NoPageRootError } from './no-page-error';
 
@@ -23,6 +24,7 @@ export type EditorProps = {
   page: Doc;
   mode: DocMode;
   shared?: boolean;
+  defaultOpenProperty?: DefaultOpenProperty;
   // on Editor ready
   onEditorReady?: (editor: AffineEditorContainer) => (() => void) | void;
   style?: CSSProperties;
@@ -58,6 +60,7 @@ const BlockSuiteEditorImpl = ({
   shared,
   style,
   onEditorReady,
+  defaultOpenProperty,
 }: EditorProps) => {
   usePageRoot(page);
 
@@ -134,6 +137,7 @@ const BlockSuiteEditorImpl = ({
       mode={mode}
       page={page}
       shared={shared}
+      defaultOpenProperty={defaultOpenProperty}
       ref={editorRef}
       className={className}
       style={style}

@@ -1,3 +1,5 @@
+import { resolveMx, resolveTxt, setServers } from 'node:dns/promises';
+
 import {
   Body,
   Controller,
@@ -55,7 +57,16 @@ export class AuthController {
     private readonly user: UserService,
     private readonly token: TokenService,
     private readonly config: Config
-  ) {}
+  ) {
+    if (config.node.dev) {
+      // set DNS servers in dev mode
+      // NOTE: some network debugging software uses DNS hijacking
+      // to better debug traffic, but their DNS servers may not
+      // handle the non dns query(like txt, mx) correctly, so we
+      // set a public DNS server here to avoid this issue.
+      setServers(['1.1.1.1', '8.8.8.8']);
+    }
+  }
 
   @Public()
   @Post('/preflight')
@@ -146,6 +157,33 @@ export class AuthController {
       const allowSignup = await this.config.runtime.fetch('auth/allowSignup');
       if (!allowSignup) {
         throw new SignUpForbidden();
+      }
+
+      const requireEmailDomainVerification = await this.config.runtime.fetch(
+        'auth/requireEmailDomainVerification'
+      );
+      if (requireEmailDomainVerification) {
+        // verify domain has MX, SPF, DMARC records
+        const [name, domain, ...rest] = email.split('@');
+        if (rest.length || !domain) {
+          throw new InvalidEmail();
+        }
+        const [mx, spf, dmarc] = await Promise.allSettled([
+          resolveMx(domain).then(t => t.map(mx => mx.exchange).filter(Boolean)),
+          resolveTxt(domain).then(t =>
+            t.map(([k]) => k).filter(txt => txt.includes('v=spf1'))
+          ),
+          resolveTxt('_dmarc.' + domain).then(t =>
+            t.map(([k]) => k).filter(txt => txt.includes('v=DMARC1'))
+          ),
+        ]).then(t => t.filter(t => t.status === 'fulfilled').map(t => t.value));
+        if (!mx?.length || !spf?.length || !dmarc?.length) {
+          throw new InvalidEmail();
+        }
+        // filter out alias emails
+        if (name.includes('+') || name.includes('.')) {
+          throw new InvalidEmail();
+        }
       }
     }
 

@@ -1,8 +1,8 @@
 import { ScrollableContainer } from '@affine/component';
 import { Divider } from '@affine/component/ui/divider';
-import { openSettingModalAtom } from '@affine/core/components/atoms';
 import { useEnableCloud } from '@affine/core/components/hooks/affine/use-enable-cloud';
 import { AuthService } from '@affine/core/modules/cloud';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { WorkspaceFlavour } from '@affine/env/workspace';
 import { useI18n } from '@affine/i18n';
 import { CloudWorkspaceIcon, LocalWorkspaceIcon } from '@blocksuite/icons/rc';
@@ -14,7 +14,6 @@ import {
   WorkspaceService,
   WorkspacesService,
 } from '@toeverything/infra';
-import { useSetAtom } from 'jotai';
 import { useCallback, useMemo } from 'react';
 
 import { WorkspaceCard } from '../../workspace-card';
@@ -100,10 +99,9 @@ export const AFFiNEWorkspaceList = ({
 }) => {
   const workspacesService = useService(WorkspacesService);
   const workspaces = useLiveData(workspacesService.list.workspaces$);
+  const globalDialogService = useService(GlobalDialogService);
 
   const confirmEnableCloud = useEnableCloud();
-
-  const setOpenSettingModalAtom = useSetAtom(openSettingModalAtom);
 
   const session = useService(AuthService).session;
   const status = useLiveData(session.status$);
@@ -128,14 +126,13 @@ export const AFFiNEWorkspaceList = ({
 
   const onClickWorkspaceSetting = useCallback(
     (workspaceMetadata: WorkspaceMetadata) => {
-      setOpenSettingModalAtom({
-        open: true,
+      globalDialogService.open('setting', {
         activeTab: 'workspace:preference',
         workspaceMetadata,
       });
       onEventEnd?.();
     },
-    [onEventEnd, setOpenSettingModalAtom]
+    [globalDialogService, onEventEnd]
   );
 
   const onClickEnableCloud = useCallback(

@@ -64,10 +64,9 @@ export const useExplorerTagNodeOperations = (
       const newDoc = createPage();
       tagRecord?.tag(newDoc.id);
       track.$.navigationPanel.tags.createDoc();
-      workbenchService.workbench.openDoc(newDoc.id);
       openNodeCollapsed();
     }
-  }, [createPage, openNodeCollapsed, tagRecord, workbenchService.workbench]);
+  }, [createPage, openNodeCollapsed, tagRecord]);
 
   const handleMoveToTrash = useCallback(() => {
     tagService.tagList.deleteTag(tagId);

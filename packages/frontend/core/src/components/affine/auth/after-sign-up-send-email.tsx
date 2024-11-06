@@ -7,19 +7,20 @@ import {
 } from '@affine/component/auth-components';
 import { Button } from '@affine/component/ui/button';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
+import { CaptchaService } from '@affine/core/modules/cloud';
 import { Trans, useI18n } from '@affine/i18n';
-import { useService } from '@toeverything/infra';
+import { useLiveData, useService } from '@toeverything/infra';
 import type { FC } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { AuthService } from '../../../modules/cloud';
 import type { AuthPanelProps } from './index';
 import * as style from './style.css';
-import { Captcha, useCaptcha } from './use-captcha';
+import { Captcha } from './use-captcha';
 
 export const AfterSignUpSendEmail: FC<
   AuthPanelProps<'afterSignUpSendEmail'>
-> = ({ setAuthData, email }) => {
+> = ({ setAuthData, email, redirectUrl }) => {
   const [resendCountDown, setResendCountDown] = useState(60);
 
   useEffect(() => {
@@ -36,14 +37,22 @@ export const AfterSignUpSendEmail: FC<
   const t = useI18n();
   const authService = useService(AuthService);
 
-  const [verifyToken, challenge] = useCaptcha();
+  const captchaService = useService(CaptchaService);
+
+  const verifyToken = useLiveData(captchaService.verifyToken$);
+  const needCaptcha = useLiveData(captchaService.needCaptcha$);
+  const challenge = useLiveData(captchaService.challenge$);
 
   const onResendClick = useAsyncCallback(async () => {
     setIsSending(true);
     try {
-      if (verifyToken) {
-        await authService.sendEmailMagicLink(email, verifyToken, challenge);
-      }
+      captchaService.revalidate();
+      await authService.sendEmailMagicLink(
+        email,
+        verifyToken,
+        challenge,
+        redirectUrl
+      );
       setResendCountDown(60);
     } catch (err) {
       console.error(err);
@@ -52,7 +61,7 @@ export const AfterSignUpSendEmail: FC<
       });
     }
     setIsSending(false);
-  }, [authService, challenge, email, verifyToken]);
+  }, [authService, captchaService, challenge, email, redirectUrl, verifyToken]);
 
   return (
     <>
@@ -74,8 +83,10 @@ export const AfterSignUpSendEmail: FC<
           <>
             <Captcha />
             <Button
-              style={!verifyToken ? { cursor: 'not-allowed' } : {}}
-              disabled={!verifyToken || isSending}
+              style={
+                !verifyToken && needCaptcha ? { cursor: 'not-allowed' } : {}
+              }
+              disabled={(!verifyToken && needCaptcha) || isSending}
               variant="plain"
               size="large"
               onClick={onResendClick}

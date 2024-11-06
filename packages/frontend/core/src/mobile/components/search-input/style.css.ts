@@ -1,3 +1,4 @@
+import { bodyRegular } from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { generateIdentifier, style } from '@vanilla-extract/css';
 
@@ -26,18 +27,16 @@ export const prefixIcon = style({
   pointerEvents: 'none',
 });
 
-export const input = style({
-  padding: '11px 8px 11px 36px',
-  width: '100%',
-  height: '100%',
-  outline: 'none',
-  border: 'none',
-
-  fontWeight: 400,
-  fontSize: 17,
-  lineHeight: '22px',
-  letterSpacing: -0.43,
-});
+export const input = style([
+  bodyRegular,
+  {
+    padding: '11px 8px 11px 36px',
+    width: '100%',
+    height: '100%',
+    outline: 'none',
+    border: 'none',
+  },
+]);
 
 export const placeholder = style([
   input,

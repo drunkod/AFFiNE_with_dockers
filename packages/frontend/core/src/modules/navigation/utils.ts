@@ -1,3 +1,4 @@
+import { channelToScheme } from '@affine/core/utils';
 import type { ReferenceParams } from '@blocksuite/affine/blocks';
 import { isNil, pick, pickBy } from 'lodash-es';
 import type { ParsedQuery, ParseOptions } from 'query-string';
@@ -6,7 +7,6 @@ import queryString from 'query-string';
 function maybeAffineOrigin(origin: string, baseUrl: string) {
   return (
     origin.startsWith('file://') ||
-    origin.startsWith('affine://') ||
     origin.endsWith('affine.pro') || // stable/beta
     origin.endsWith('affine.fail') || // canary
     origin === baseUrl // localhost or self-hosted
@@ -18,6 +18,13 @@ export const resolveRouteLinkMeta = (
   baseUrl = location.origin
 ) => {
   try {
+    // if href is started with affine protocol, we need to convert it to http protocol to may URL happy
+    const affineProtocol = channelToScheme[BUILD_CONFIG.appBuildType] + '://';
+
+    if (href.startsWith(affineProtocol)) {
+      href = href.replace(affineProtocol, 'http://');
+    }
+
     const url = new URL(href, baseUrl);
 
     // check if origin is one of affine's origins
@@ -129,7 +136,14 @@ export const preprocessParams = (
     result.elementIds = result.elementIds.filter(v => v.length);
   }
 
-  return pick(result, ['mode', 'blockIds', 'elementIds', 'refreshKey']);
+  return pick(result, [
+    'mode',
+    'blockIds',
+    'elementIds',
+    'databaseId',
+    'databaseRowId',
+    'refreshKey',
+  ]);
 };
 
 export const paramsParseOptions: ParseOptions = {
@@ -142,6 +156,8 @@ export const paramsParseOptions: ParseOptions = {
       value.length ? value.split(',').filter(v => v.length) : [],
     elementIds: value =>
       value.length ? value.split(',').filter(v => v.length) : [],
+    databaseId: 'string',
+    databaseRowId: 'string',
     refreshKey: 'string',
   },
 };

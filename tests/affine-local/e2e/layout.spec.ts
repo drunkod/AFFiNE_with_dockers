@@ -10,9 +10,6 @@ test('Collapse Sidebar', async ({ page }) => {
     .locator('[data-testid=app-sidebar-arrow-button-collapse][data-show=true]')
     .click();
   const sliderBarArea = page.getByTestId('app-sidebar');
-  await sliderBarArea.hover();
-  await page.mouse.move(300, 300);
-  await page.waitForTimeout(5000);
   await expect(sliderBarArea).not.toBeInViewport();
 });
 
@@ -23,9 +20,6 @@ test('Expand Sidebar', async ({ page }) => {
     .locator('[data-testid=app-sidebar-arrow-button-collapse][data-show=true]')
     .click();
   const sliderBarArea = page.getByTestId('sliderBar-inner');
-  await sliderBarArea.hover();
-  await page.mouse.move(300, 300);
-  await page.waitForTimeout(5000);
   await expect(sliderBarArea).not.toBeInViewport();
 
   await page
@@ -63,7 +57,7 @@ test('Drag resizer can resize sidebar', async ({ page }) => {
   });
   await page.mouse.up();
   const boundingBox = await page.getByTestId('app-sidebar').boundingBox();
-  expect(boundingBox?.width).toBe(399);
+  expect(Math.floor(boundingBox?.width ?? 0)).toBe(399);
 });
 
 test('Sidebar in between sm & md breakpoint', async ({ page }) => {

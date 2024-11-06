@@ -1,4 +1,9 @@
 import { cssVar } from '@toeverything/theme';
+import {
+  bodyEmphasized,
+  bodyRegular,
+  footnoteRegular,
+} from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { style } from '@vanilla-extract/css';
 
@@ -22,31 +27,30 @@ export const divider = style({
   },
 });
 
-export const head = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 4,
-  padding: '10px 16px',
-  fontSize: 17,
-  fontWeight: 600,
-  lineHeight: '22px',
-  letterSpacing: -0.43,
-  color: cssVarV2('text/primary'),
-});
+export const head = style([
+  bodyEmphasized,
+  {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+    padding: '10px 16px',
+    color: cssVarV2('text/primary'),
+  },
+]);
 export const body = style({
   overflowY: 'auto',
   flexShrink: 0,
   flex: 1,
 });
 export const wsList = style({});
-export const wsListTitle = style({
-  padding: '6px 16px',
-  fontSize: 13,
-  lineHeight: '18px',
-  letterSpacing: -0.08,
-  color: cssVar('textSecondaryColor'),
-});
+export const wsListTitle = style([
+  footnoteRegular,
+  {
+    padding: '6px 16px',
+    color: cssVar('textSecondaryColor'),
+  },
+]);
 export const wsItem = style({
   padding: '4px 12px',
 });
@@ -64,14 +68,14 @@ export const wsCard = style({
     background: cssVarV2('layer/background/hoverOverlay'),
   },
 });
-export const wsName = style({
-  width: 0,
-  flex: 1,
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  fontSize: 17,
-  lineHeight: '22px',
-  letterSpacing: -0.43,
-  textAlign: 'left',
-});
+export const wsName = style([
+  bodyRegular,
+  {
+    width: 0,
+    flex: 1,
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textAlign: 'left',
+  },
+]);

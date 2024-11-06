@@ -9,15 +9,13 @@ export const navWrapperStyle = style({
       zIndex: -1,
     },
   },
+  paddingBottom: 8,
   selectors: {
     '&[data-has-border=true]': {
       borderRight: `0.5px solid ${cssVarV2('layer/insideBorder/border')}`,
     },
     '&[data-is-floating="true"]': {
       backgroundColor: cssVarV2('layer/background/primary'),
-    },
-    '&[data-client-border="true"]': {
-      paddingBottom: 8,
     },
   },
 });
@@ -106,4 +104,9 @@ export const sidebarFloatMaskStyle = style({
       display: 'none',
     },
   },
+});
+
+export const resizeHandleShortcutStyle = style({
+  alignItems: 'flex-end',
+  marginBottom: '2px',
 });

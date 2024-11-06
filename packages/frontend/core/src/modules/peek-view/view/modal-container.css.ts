@@ -31,7 +31,7 @@ export const modalContentContainer = style({
   justifyContent: 'center',
   borderRadius: 12,
   '@media': {
-    // mobile:
+    // for small screen
     'screen and (width <= 640px)': {
       selectors: {
         [`${modalContentWrapper}:is([data-mode="max"], [data-mode="fit"]) &`]: {

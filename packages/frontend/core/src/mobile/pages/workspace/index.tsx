@@ -1,8 +1,6 @@
 import { AffineErrorBoundary } from '@affine/core/components/affine/affine-error-boundary';
 import { AffineErrorComponent } from '@affine/core/components/affine/affine-error-boundary/affine-error-fallback';
-import { AppFallback } from '@affine/core/components/affine/app-container';
 import { PageNotFound } from '@affine/core/desktop/pages/404';
-import { MobileWorkbenchRoot } from '@affine/core/desktop/pages/workspace/workbench-root';
 import { workbenchRoutes } from '@affine/core/mobile/workbench-router';
 import {
   useLiveData,
@@ -24,6 +22,7 @@ import {
 } from 'react-router-dom';
 
 import { WorkspaceLayout } from './layout';
+import { MobileWorkbenchRoot } from './workbench-root';
 
 type Route = { Component: React.ComponentType };
 /**
@@ -136,7 +135,7 @@ export const Component = () => {
     return <PageNotFound noPermission />;
   }
   if (!meta) {
-    return <AppFallback key="workspaceLoading" />;
+    return;
   }
   return (
     <WorkspaceLayout meta={meta}>

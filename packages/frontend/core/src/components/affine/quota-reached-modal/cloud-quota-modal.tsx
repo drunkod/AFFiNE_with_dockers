@@ -1,16 +1,14 @@
 import { ConfirmModal } from '@affine/component/ui/modal';
-import {
-  openQuotaModalAtom,
-  openSettingModalAtom,
-} from '@affine/core/components/atoms';
+import { openQuotaModalAtom } from '@affine/core/components/atoms';
 import { UserQuotaService } from '@affine/core/modules/cloud';
+import { GlobalDialogService } from '@affine/core/modules/dialogs';
 import { WorkspacePermissionService } from '@affine/core/modules/permissions';
 import { WorkspaceQuotaService } from '@affine/core/modules/quota';
 import { useI18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
 import bytes from 'bytes';
-import { useAtom, useSetAtom } from 'jotai';
+import { useAtom } from 'jotai';
 import { useCallback, useEffect, useMemo } from 'react';
 
 export const CloudQuotaModal = () => {
@@ -45,17 +43,16 @@ export const CloudQuotaModal = () => {
     return isOwner && userQuota?.name === 'free';
   }, [isOwner, userQuota]);
 
-  const setSettingModalAtom = useSetAtom(openSettingModalAtom);
+  const globalDialogService = useService(GlobalDialogService);
   const handleUpgradeConfirm = useCallback(() => {
-    setSettingModalAtom({
-      open: true,
+    globalDialogService.open('setting', {
       activeTab: 'plans',
       scrollAnchor: 'cloudPricingPlan',
     });
 
     track.$.paywall.storage.viewPlans();
     setOpen(false);
-  }, [setOpen, setSettingModalAtom]);
+  }, [globalDialogService, setOpen]);
 
   const description = useMemo(() => {
     if (userQuota && isFreePlanOwner) {

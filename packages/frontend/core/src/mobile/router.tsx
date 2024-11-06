@@ -1,3 +1,4 @@
+import { NotificationCenter } from '@affine/component';
 import { NavigateContext } from '@affine/core/components/hooks/use-navigate-helper';
 import { wrapCreateBrowserRouter } from '@sentry/react';
 import { useEffect, useState } from 'react';
@@ -10,7 +11,8 @@ import {
   useNavigate,
 } from 'react-router-dom';
 
-import { AllWorkspaceModals } from './provider/model-provider';
+import { GlobalDialogs } from './dialogs';
+import { MobileSignInModal } from './views/sign-in/modal';
 
 function RootRouter() {
   const navigate = useNavigate();
@@ -23,7 +25,9 @@ function RootRouter() {
   return (
     ready && (
       <NavigateContext.Provider value={navigate}>
-        <AllWorkspaceModals />
+        <GlobalDialogs />
+        <NotificationCenter />
+        <MobileSignInModal />
         <Outlet />
       </NavigateContext.Provider>
     )
@@ -84,6 +88,10 @@ export const topLevelRoutes = [
       {
         path: '/redirect-proxy',
         lazy: () => import('@affine/core/desktop/pages/redirect'),
+      },
+      {
+        path: '/open-app/:action',
+        lazy: () => import('@affine/core/desktop/pages/open-app'),
       },
       {
         path: '*',

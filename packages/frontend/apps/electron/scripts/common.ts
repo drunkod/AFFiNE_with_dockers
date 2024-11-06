@@ -20,6 +20,8 @@ export const config = (): BuildOptions => {
     'process.env.GITHUB_SHA': process.env.GITHUB_SHA,
     'process.env.SENTRY_RELEASE': process.env.SENTRY_RELEASE,
     'process.env.SENTRY_DSN': process.env.SENTRY_DSN,
+    'process.env.DEV_SERVER_URL': process.env.DEV_SERVER_URL,
+    'process.env.NODE_ENV': process.env.NODE_ENV,
     REPLACE_ME_BUILD_ENV: process.env.BUILD_TYPE ?? 'stable',
     ...Object.entries(
       getBuildConfig({

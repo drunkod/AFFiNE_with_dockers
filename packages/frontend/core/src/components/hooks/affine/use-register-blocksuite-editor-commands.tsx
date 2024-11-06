@@ -1,9 +1,9 @@
-import { toast } from '@affine/component';
+import { toast, useConfirmModal } from '@affine/component';
 import {
   PreconditionStrategy,
   registerAffineCommand,
 } from '@affine/core/commands';
-import { DocInfoService } from '@affine/core/modules/doc-info';
+import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import type { Editor } from '@affine/core/modules/editor';
 import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
 import { WorkspaceFlavour } from '@affine/env/workspace';
@@ -22,7 +22,6 @@ import { useCallback, useEffect } from 'react';
 import { pageHistoryModalAtom } from '../../../components/atoms/page-history';
 import { useBlockSuiteMetaHelper } from './use-block-suite-meta-helper';
 import { useExportPage } from './use-export-page';
-import { useTrashModalHelper } from './use-trash-modal-helper';
 
 export function useRegisterBlocksuiteEditorCommands(editor: Editor) {
   const doc = useService(DocService).doc;
@@ -36,7 +35,7 @@ export function useRegisterBlocksuiteEditorCommands(editor: Editor) {
   const trash = useLiveData(doc.trash$);
 
   const setPageHistoryModalState = useSetAtom(pageHistoryModalAtom);
-  const docInfoModal = useService(DocInfoService).modal;
+  const workspaceDialogService = useService(WorkspaceDialogService);
 
   const openHistoryModal = useCallback(() => {
     setPageHistoryModalState(() => ({
@@ -46,22 +45,25 @@ export function useRegisterBlocksuiteEditorCommands(editor: Editor) {
   }, [docId, setPageHistoryModalState]);
 
   const openInfoModal = useCallback(() => {
-    docInfoModal.open(docId);
-  }, [docId, docInfoModal]);
+    workspaceDialogService.open('doc-info', { docId });
+  }, [docId, workspaceDialogService]);
 
   const { duplicate } = useBlockSuiteMetaHelper();
   const exportHandler = useExportPage();
-  const { setTrashModal } = useTrashModalHelper();
-  const onClickDelete = useCallback(
-    (title: string) => {
-      setTrashModal({
-        open: true,
-        pageIds: [docId],
-        pageTitles: [title],
-      });
-    },
-    [docId, setTrashModal]
-  );
+  const { openConfirmModal } = useConfirmModal();
+  const onClickDelete = useCallback(() => {
+    openConfirmModal({
+      title: t['com.affine.moveToTrash.confirmModal.title'](),
+      description: t['com.affine.moveToTrash.confirmModal.description']({
+        title: doc.title$.value || t['Untitled'](),
+      }),
+      cancelText: t['com.affine.confirmModal.button.cancel'](),
+      confirmText: t.Delete(),
+      onConfirm: () => {
+        doc.moveToTrash();
+      },
+    });
+  }, [doc, openConfirmModal, t]);
 
   const isCloudWorkspace = workspace.flavour === WorkspaceFlavour.AFFINE_CLOUD;
 
@@ -176,23 +178,6 @@ export function useRegisterBlocksuiteEditorCommands(editor: Editor) {
 
     unsubs.push(
       registerAffineCommand({
-        id: `editor:${mode}-export-to-pdf`,
-        preconditionStrategy: () => mode === 'page' && !trash,
-        category: `editor:${mode}`,
-        icon: mode === 'page' ? <PageIcon /> : <EdgelessIcon />,
-        label: t['Export to PDF'](),
-        async run() {
-          track.$.cmdk.editor.export({
-            type: 'pdf',
-          });
-
-          exportHandler('pdf');
-        },
-      })
-    );
-
-    unsubs.push(
-      registerAffineCommand({
         id: `editor:${mode}-export-to-html`,
         preconditionStrategy,
         category: `editor:${mode}`,
@@ -252,7 +237,7 @@ export function useRegisterBlocksuiteEditorCommands(editor: Editor) {
         run() {
           track.$.cmdk.editor.deleteDoc();
 
-          onClickDelete(doc.title$.value);
+          onClickDelete();
         },
       })
     );

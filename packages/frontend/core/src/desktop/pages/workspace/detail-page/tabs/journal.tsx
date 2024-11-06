@@ -6,8 +6,8 @@ import {
   MenuItem,
   MenuSeparator,
   Scrollable,
+  useConfirmModal,
 } from '@affine/component';
-import { useTrashModalHelper } from '@affine/core/components/hooks/affine/use-trash-modal-helper';
 import { useJournalRouteHelper } from '@affine/core/components/hooks/use-journal';
 import { MoveToTrash } from '@affine/core/components/page-list';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
@@ -21,7 +21,6 @@ import {
   DocsService,
   useLiveData,
   useService,
-  WorkspaceService,
 } from '@toeverything/infra';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import clsx from 'clsx';
@@ -100,12 +99,11 @@ const mobile = environment.isMobile;
 export const EditorJournalPanel = () => {
   const t = useI18n();
   const doc = useService(DocService).doc;
-  const workspace = useService(WorkspaceService).workspace;
   const journalService = useService(JournalService);
   const journalDateStr = useLiveData(journalService.journalDate$(doc.id));
   const journalDate = journalDateStr ? dayjs(journalDateStr) : null;
   const isJournal = !!journalDate;
-  const { openJournal } = useJournalRouteHelper(workspace.docCollection);
+  const { openJournal } = useJournalRouteHelper();
 
   const onDateSelect = useCallback(
     (date: string) => {
@@ -312,17 +310,23 @@ const ConflictList = ({
   const t = useI18n();
   const currentDoc = useService(DocService).doc;
   const journalService = useService(JournalService);
-  const { setTrashModal } = useTrashModalHelper();
+  const { openConfirmModal } = useConfirmModal();
 
   const handleOpenTrashModal = useCallback(
     (docRecord: DocRecord) => {
-      setTrashModal({
-        open: true,
-        pageIds: [docRecord.id],
-        pageTitles: [docRecord.title$.value],
+      openConfirmModal({
+        title: t['com.affine.moveToTrash.confirmModal.title'](),
+        description: t['com.affine.moveToTrash.confirmModal.description']({
+          title: docRecord.title$.value || t['Untitled'](),
+        }),
+        cancelText: t['com.affine.confirmModal.button.cancel'](),
+        confirmText: t.Delete(),
+        onConfirm: () => {
+          docRecord.moveToTrash();
+        },
       });
     },
-    [setTrashModal]
+    [openConfirmModal, t]
   );
   const handleRemoveJournalMark = useCallback(
     (docId: string) => {

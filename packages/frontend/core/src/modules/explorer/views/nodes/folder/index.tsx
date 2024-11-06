@@ -10,17 +10,12 @@ import {
   notify,
 } from '@affine/component';
 import { usePageHelper } from '@affine/core/components/blocksuite/block-suite-page-list/utils';
-import {
-  useSelectCollection,
-  useSelectDoc,
-  useSelectTag,
-} from '@affine/core/components/page-list/selector';
+import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import { CompatibleFavoriteItemsAdapter } from '@affine/core/modules/favorite';
 import {
   type FolderNode,
   OrganizeService,
 } from '@affine/core/modules/organize';
-import { WorkbenchService } from '@affine/core/modules/workbench';
 import type { AffineDNDData } from '@affine/core/types/dnd';
 import { Unreachable } from '@affine/env/constant';
 import { useI18n } from '@affine/i18n';
@@ -173,7 +168,7 @@ const ExplorerFolderIcon: ExplorerTreeNodeIcon = ({
   />
 );
 
-export const ExplorerFolderNodeFolder = ({
+const ExplorerFolderNodeFolder = ({
   node,
   onDrop,
   defaultRenaming,
@@ -187,16 +182,13 @@ export const ExplorerFolderNodeFolder = ({
   node: FolderNode;
 } & GenericExplorerNode) => {
   const t = useI18n();
-  const { workbenchService, workspaceService, featureFlagService } =
+  const { workspaceService, featureFlagService, workspaceDialogService } =
     useServices({
-      WorkbenchService,
       WorkspaceService,
       CompatibleFavoriteItemsAdapter,
       FeatureFlagService,
+      WorkspaceDialogService,
     });
-  const openDocsSelector = useSelectDoc();
-  const openTagsSelector = useSelectTag();
-  const openCollectionsSelector = useSelectCollection();
   const name = useLiveData(node.name$);
   const enableEmojiIcon = useLiveData(
     featureFlagService.flags.enable_emoji_folder_icon.$
@@ -552,14 +544,13 @@ export const ExplorerFolderNodeFolder = ({
   const handleNewDoc = useCallback(() => {
     const newDoc = createPage();
     node.createLink('doc', newDoc.id, node.indexAt('before'));
-    workbenchService.workbench.openDoc(newDoc.id);
     track.$.navigationPanel.folders.createDoc();
     track.$.navigationPanel.organize.createOrganizeItem({
       type: 'link',
       target: 'doc',
     });
     setCollapsed(false);
-  }, [createPage, node, workbenchService.workbench]);
+  }, [createPage, node]);
 
   const handleCreateSubfolder = useCallback(() => {
     const newFolderId = node.createFolder(
@@ -579,12 +570,19 @@ export const ExplorerFolderNodeFolder = ({
         .filter(Boolean) as string[];
       const selector =
         type === 'doc'
-          ? openDocsSelector
+          ? 'doc-selector'
           : type === 'collection'
-            ? openCollectionsSelector
-            : openTagsSelector;
-      selector(initialIds)
-        .then(selectedIds => {
+            ? 'collection-selector'
+            : 'tag-selector';
+      workspaceDialogService.open(
+        selector,
+        {
+          init: initialIds,
+        },
+        selectedIds => {
+          if (selectedIds === undefined) {
+            return;
+          }
           const newItemIds = difference(selectedIds, initialIds);
           const removedItemIds = difference(initialIds, selectedIds);
           const removedItems = children.filter(
@@ -598,22 +596,14 @@ export const ExplorerFolderNodeFolder = ({
           removedItems.forEach(node => node.delete());
           const updated = newItemIds.length + removedItems.length;
           updated && setCollapsed(false);
-        })
-        .catch(err => {
-          console.error(`Unexpected error while selecting ${type}`, err);
-        });
+        }
+      );
       track.$.navigationPanel.organize.createOrganizeItem({
         type: 'link',
         target: type,
       });
     },
-    [
-      children,
-      node,
-      openCollectionsSelector,
-      openDocsSelector,
-      openTagsSelector,
-    ]
+    [children, node, workspaceDialogService]
   );
 
   const folderOperations = useMemo(() => {

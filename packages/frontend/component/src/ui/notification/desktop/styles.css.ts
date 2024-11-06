@@ -8,11 +8,16 @@ export const actionTextColor = createVar();
 export const iconColor = createVar();
 export const closeIconColor = createVar();
 
-export const card = style({
+export const cardWrapper = style({
   borderRadius: 8,
+  boxShadow: cssVar('shadow1'),
+  overflow: 'hidden',
+});
+
+export const card = style({
+  borderRadius: 'inherit',
   borderWidth: 1,
   borderStyle: 'solid',
-  boxShadow: cssVar('shadow1'),
   backgroundColor: cardColor,
   borderColor: cardBorderColor,
   color: cardForeground,

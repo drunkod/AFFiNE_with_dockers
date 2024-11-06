@@ -1,12 +1,23 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic';
+import { useTheme } from 'next-themes';
 import { type CSSProperties, useMemo } from 'react';
 import { Toaster } from 'sonner';
 
 import type { NotificationCenterProps } from '../types';
+import { cardWrapper } from './styles.css';
+
+const toastOptions = {
+  style: {
+    width: '100%',
+  },
+  className: cardWrapper,
+};
 
 export function DesktopNotificationCenter({
   width = 380,
 }: NotificationCenterProps) {
+  const theme = useTheme();
+  const resolvedTheme = theme.resolvedTheme as 'light' | 'dark';
   const style = useMemo(() => {
     return {
       ...assignInlineVars({
@@ -18,20 +29,12 @@ export function DesktopNotificationCenter({
     } satisfies CSSProperties;
   }, [width]);
 
-  const toastOptions = useMemo(
-    () => ({
-      style: {
-        width: '100%',
-      },
-    }),
-    []
-  );
-
   return (
     <Toaster
       className="affine-notification-center"
       style={style}
       toastOptions={toastOptions}
+      theme={resolvedTheme}
     />
   );
 }

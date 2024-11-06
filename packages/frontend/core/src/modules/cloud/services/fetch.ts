@@ -3,9 +3,10 @@ import { UserFriendlyError } from '@affine/graphql';
 import { fromPromise, Service } from '@toeverything/infra';
 
 import { BackendError, NetworkError } from '../error';
+import type { FetchProvider } from '../provider/fetch';
 
 export function getAffineCloudBaseUrl(): string {
-  if (BUILD_CONFIG.isElectron) {
+  if (BUILD_CONFIG.isElectron || BUILD_CONFIG.isIOS || BUILD_CONFIG.isAndroid) {
     return BUILD_CONFIG.serverUrlPrefix;
   }
   const { protocol, hostname, port } = window.location;
@@ -17,6 +18,9 @@ const logger = new DebugLogger('affine:fetch');
 export type FetchInit = RequestInit & { timeout?: number };
 
 export class FetchService extends Service {
+  constructor(private readonly fetchProvider: FetchProvider) {
+    super();
+  }
   rxFetch = (
     input: string,
     init?: RequestInit & {
@@ -50,13 +54,15 @@ export class FetchService extends Service {
       abortController.abort('timeout');
     }, timeout);
 
-    const res = await fetch(new URL(input, getAffineCloudBaseUrl()), {
-      ...init,
-      signal: abortController.signal,
-    }).catch(err => {
-      logger.debug('network error', err);
-      throw new NetworkError(err);
-    });
+    const res = await this.fetchProvider
+      .fetch(new URL(input, getAffineCloudBaseUrl()), {
+        ...init,
+        signal: abortController.signal,
+      })
+      .catch(err => {
+        logger.debug('network error', err);
+        throw new NetworkError(err);
+      });
     clearTimeout(timeoutId);
     if (res.status === 504) {
       const error = new Error('Gateway Timeout');

@@ -1,5 +1,4 @@
 import { AffineOtherPageLayout } from '@affine/component/affine-other-page-layout';
-import { AppFallback } from '@affine/core/components/affine/app-container';
 import { workbenchRoutes } from '@affine/core/desktop/workbench-router';
 import { ZipTransformer } from '@blocksuite/affine/blocks';
 import type { Workspace, WorkspaceMetadata } from '@toeverything/infra';
@@ -15,9 +14,10 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation, useParams } from 'react-router-dom';
 
 import { AffineErrorBoundary } from '../../../components/affine/affine-error-boundary';
-import { WorkspaceLayout } from '../../../components/layouts/workspace-layout';
 import { WorkbenchRoot } from '../../../modules/workbench';
+import { AppContainer } from '../../components/app-container';
 import { PageNotFound } from '../404';
+import { WorkspaceLayout } from './layouts/workspace-layout';
 import { SharePage } from './share/share-page';
 
 declare global {
@@ -53,7 +53,7 @@ export const Component = (): ReactElement => {
       match &&
       match.params.docId &&
       match.params.workspaceId &&
-      // // TODO(eyhn): need a better way to check if it's a docId
+      // TODO(eyhn): need a better way to check if it's a docId
       workbenchRoutes.find(route =>
         matchPath(route.path, '/' + match.params.docId)
       )?.path === '/:pageId'
@@ -97,10 +97,7 @@ export const Component = (): ReactElement => {
   }, [listLoading, meta, workspaceNotFound, workspacesService]);
 
   if (workspaceNotFound) {
-    if (
-      !BUILD_CONFIG.isElectron /* only browser has share page */ &&
-      detailDocRoute
-    ) {
+    if (detailDocRoute) {
       return (
         <SharePage
           docId={detailDocRoute.docId}
@@ -115,7 +112,7 @@ export const Component = (): ReactElement => {
     );
   }
   if (!meta) {
-    return <AppFallback />;
+    return <AppContainer fallback />;
   }
 
   return <WorkspacePage meta={meta} />;
@@ -152,19 +149,12 @@ const WorkspacePage = ({ meta }: { meta: WorkspaceMetadata }) => {
         })
       );
       window.exportWorkspaceSnapshot = async (docs?: string[]) => {
-        const zip = await ZipTransformer.exportDocs(
+        await ZipTransformer.exportDocs(
           workspace.docCollection,
           Array.from(workspace.docCollection.docs.values())
             .filter(doc => (docs ? docs.includes(doc.id) : true))
             .map(doc => doc.getDoc())
         );
-        const url = URL.createObjectURL(zip);
-        // download url
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${workspace.docCollection.meta.name}.zip`;
-        a.click();
-        URL.revokeObjectURL(url);
       };
       window.importWorkspaceSnapshot = async () => {
         const input = document.createElement('input');
@@ -208,7 +198,7 @@ const WorkspacePage = ({ meta }: { meta: WorkspaceMetadata }) => {
   if (!isRootDocReady) {
     return (
       <FrameworkScope scope={workspace.scope}>
-        <AppFallback />
+        <AppContainer fallback />
       </FrameworkScope>
     );
   }

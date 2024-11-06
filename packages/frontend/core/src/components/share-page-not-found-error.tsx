@@ -23,6 +23,7 @@ export const SharePageNotFoundError = () => {
           left: '16px',
           fontSize: '24px',
           cursor: 'pointer',
+          color: 'inherit',
         }}
       >
         <Logo1Icon />
