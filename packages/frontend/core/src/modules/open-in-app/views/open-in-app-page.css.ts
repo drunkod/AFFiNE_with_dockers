@@ -59,6 +59,21 @@ export const editSettingsLink = style({
   textDecoration: 'none',
   color: cssVar('linkColor'),
   fontSize: cssVar('fontSm'),
+});
+
+export const docFooter = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  rowGap: 12,
   position: 'absolute',
   bottom: 48,
+});
+
+export const docFooterText = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  fontSize: cssVar('fontXs'),
+  color: cssVar('textSecondaryColor'),
 });

@@ -77,6 +77,18 @@ export const test = base.extend<{
       )
       .toBeTruthy();
 
+    await expect
+      .poll(
+        async () => {
+          const page = await getActivePage(electronApp.windows());
+          return !!page;
+        },
+        {
+          timeout: 50000,
+        }
+      )
+      .toBeTruthy();
+
     const page = await getActivePage(electronApp.windows());
 
     if (!page) {

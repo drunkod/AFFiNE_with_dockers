@@ -36,7 +36,6 @@ export const TagEditMenu = ({
     };
 
     return {
-      noPortal: true,
       contentOptions: {
         onClick(e) {
           e.stopPropagation();
