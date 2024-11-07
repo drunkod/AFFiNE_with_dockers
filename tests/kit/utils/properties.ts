@@ -30,20 +30,7 @@ export const openTagsEditor = async (page: Page) => {
 };
 
 export const closeTagsEditor = async (page: Page) => {
-  if (
-    await page
-      .getByTestId('info-modal')
-      .getByTestId('info-modal-title')
-      .isVisible()
-  ) {
-    // if the info modal is open, we need to use click outside to close the tag editor
-    await page
-      .getByTestId('info-modal')
-      .getByTestId('info-modal-title')
-      .click();
-  } else {
-    await page.keyboard.press('Escape');
-  }
+  await page.keyboard.press('Escape');
   await expect(page.getByTestId('tags-editor-popup')).not.toBeVisible();
 };
 
@@ -144,7 +131,7 @@ export const addCustomProperty = async (
     .click();
   if (await page.getByTestId('edit-property-menu-item').isVisible()) {
     // is edit property menu opened, close it
-    await closeTagsEditor(page);
+    await page.keyboard.press('Escape');
   }
   await page.waitForTimeout(500);
 };

@@ -10,6 +10,7 @@ export const centerContainer = style({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  height: 'fit-content',
 });
 export const content = style({
   position: 'relative',

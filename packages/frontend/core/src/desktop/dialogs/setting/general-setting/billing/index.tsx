@@ -471,7 +471,7 @@ const PaymentMethodUpdater = () => {
 
   return (
     <Button onClick={update} loading={isMutating} disabled={isMutating}>
-      {t['com.affine.payment.billing-setting.update']()}
+      {t['com.affine.payment.billing-setting.payment-method.go']()}
     </Button>
   );
 };

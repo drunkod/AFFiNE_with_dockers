@@ -2,7 +2,7 @@ import { Button } from '@affine/component/ui/button';
 import { resolveLinkToDoc } from '@affine/core/modules/navigation';
 import { appIconMap, appNames } from '@affine/core/utils/channel';
 import { Trans, useI18n } from '@affine/i18n';
-import { Logo1Icon } from '@blocksuite/icons/rc';
+import { LocalWorkspaceIcon, Logo1Icon } from '@blocksuite/icons/rc';
 import { useService } from '@toeverything/infra';
 import type { MouseEvent } from 'react';
 import { useCallback } from 'react';
@@ -150,14 +150,19 @@ export const OpenInAppPage = ({ urlToOpen, openHereClicked }: OpenAppProps) => {
       </div>
 
       {maybeDocLink ? (
-        <a
-          className={styles.editSettingsLink}
-          onClick={goToAppearanceSetting}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t['com.affine.auth.open.affine.doc.edit-settings']()}
-        </a>
+        <div className={styles.docFooter}>
+          <button
+            className={styles.editSettingsLink}
+            onClick={goToAppearanceSetting}
+          >
+            {t['com.affine.auth.open.affine.doc.edit-settings']()}
+          </button>
+
+          <div className={styles.docFooterText}>
+            <LocalWorkspaceIcon width={16} height={16} />
+            {t['com.affine.auth.open.affine.doc.footer-text']()}
+          </div>
+        </div>
       ) : null}
     </div>
   );
