@@ -43,7 +43,7 @@
       # in
       {
         devShells = let
-          bareMinimum = with pkgs; [corepack just nodejs_20 git];
+          bareMinimum = with pkgs; [corepack just nodejs_20 git yarn rustup];
         in {
           default = pkgs.mkShell {
             nativeBuildInputs =
@@ -58,11 +58,11 @@
               export PRISMA_QUERY_ENGINE_BINARY="${pkgs.prisma-engines}/bin/query-engine"
               export PRISMA_QUERY_ENGINE_LIBRARY="${pkgs.prisma-engines}/lib/libquery_engine.node"
               export PRISMA_FMT_BINARY="${pkgs.prisma-engines}/bin/prisma-fmt"
-              export PATH="$PWD/backend/node_modules/.bin/:$PATH"
+              export PATH="$PWD/node_modules/.bin/:$PATH"
             '';
           };
 
-          dev = pkgs.mkShell {
+          build = pkgs.mkShell {
             nativeBuildInputs =
               bareMinimum
               ++ (with pkgs; [
@@ -75,7 +75,20 @@
               export PRISMA_QUERY_ENGINE_BINARY="${pkgs.prisma-engines}/bin/query-engine"
               export PRISMA_QUERY_ENGINE_LIBRARY="${pkgs.prisma-engines}/lib/libquery_engine.node"
               export PRISMA_FMT_BINARY="${pkgs.prisma-engines}/bin/prisma-fmt"
-              export PATH="$PWD/backend/node_modules/.bin/:$PATH"
+              # export PATH="$PWD/backend/node_modules/.bin/:$PATH"
+              export PATH="$PWD/node_modules/.bin/:$PATH"
+
+              corepack prepare yarn@stable --activate
+
+              # install dependencies
+              yarn install
+
+              # It will build the native module at /packages/frontend/native
+              #  and build Node.js binding using NAPI.rs. 
+              yarn workspace @affine/native build
+              
+              # Build Server Dependencies
+              yarn workspace @affine/server-native build
             '';
           };          
 
