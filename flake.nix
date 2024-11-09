@@ -43,7 +43,9 @@
       # in
       {
         devShells = let
-          bareMinimum = with pkgs; [corepack just nodejs_20 git yarn rustup];
+          bareMinimum = with pkgs; [corepack just nodejs_20 git rustup];
+          bareMinimum_node = with pkgs; [ nodejs_20];
+   
         in {
           default = pkgs.mkShell {
             nativeBuildInputs =
@@ -51,6 +53,7 @@
               ++ (with pkgs; [
                 prisma-engines
                 openssl
+                yarn-berry
               ]);
             # shellHook = prisma.shellHook;
             shellHook = ''
@@ -94,18 +97,28 @@
               BUILD_TYPE=canary yarn workspace @affine/admin build
               BUILD_TYPE=canary yarn workspace @affine/mobile build
               BUILD_TYPE=canary yarn workspace @affine/server build
+
+              mv ./packages/backend/native/server-native.node ./packages/backend/server/server-native.node
+              # yarn nx run-many -t build -p @affine/server-native
+              # Ran target build for project @affine/server-native (5s)
+
+              #   ✔  0/0 succeeded [0 read from cache]
+
+              #   ✖  0/0 targets failed, including the following:              
             '';
           };
 
           docker = pkgs.mkShell {
             nativeBuildInputs =
-              bareMinimum
+              bareMinimum_node
               ++ (with pkgs; [
                 prisma-engines
                 openssl
+                yarn
               ]);
             # shellHook = prisma.shellHook;
             shellHook = ''
+              
               export PRISMA_SCHEMA_ENGINE_BINARY="${pkgs.prisma-engines}/bin/schema-engine"
               export PRISMA_QUERY_ENGINE_BINARY="${pkgs.prisma-engines}/bin/query-engine"
               export PRISMA_QUERY_ENGINE_LIBRARY="${pkgs.prisma-engines}/lib/libquery_engine.node"
@@ -113,23 +126,41 @@
               # export PATH="$PWD/backend/node_modules/.bin/:$PATH"
               export PATH="$PWD/node_modules/.bin/:$PATH"
               # Create the necessary directories
-              mkdir -p app/static
-              mkdir -p app/static/admin
-              mkdir -p app/static/mobile
+              mkdir -p /tmp/app/static
+              mkdir -p /tmp/app/static/admin
+              mkdir -p /tmp/app/static/mobile
 
               # Copy backend server files
-              cp -r ./packages/backend/server/. app
+              cp -r ./packages/backend/server/. /tmp/app
 
               # Copy frontend web app files
-              cp -r ./packages/frontend/apps/web/dist/. app/static
+              cp -r ./packages/frontend/apps/web/dist/. /tmp/app/static
 
               # Copy frontend admin app files
-              cp -r ./packages/frontend/admin/dist/. app/static/admin
+              cp -r ./packages/frontend/admin/dist/. /tmp/app/static/admin
 
               # Copy frontend mobile app files
-              cp -r ./packages/frontend/apps/mobile/dist/. app/static/mobile
+              cp -r ./packages/frontend/apps/mobile/dist/. /tmp/app/static/mobile
 
-              cd app
+              cd /tmp/app
+
+              yarn -v
+
+              # Create the necessary directories
+              # with sudo?
+              mkdir -p ~/.affine
+              mkdir -p ~/.affine/config
+              mkdir -p ~/.affine/storage
+              # mkdir -p ~/.affine/config
+
+
+              export NODE_OPTIONS="--import=./scripts/register.js"
+              export AFFINE_CONFIG_PATH="~/.affine/config"
+              export REDIS_SERVER_HOST=localhost
+              export DATABASE_URL="postgres://affine:affine@localhost:5432/affine"
+              export NODE_ENV="production"
+              # path error Error: EACCES: permission denied, mkdir '/root/.affine/config'
+              sed -i "s|'/root/.affine/config'| '~/.affine/config'|g" "/tmp/app/scripts/self-host-predeploy.js"
 
               # Run the Node.js application
               # node --import ./scripts/register.js ./dist/index.js
