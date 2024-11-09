@@ -86,11 +86,57 @@
               # It will build the native module at /packages/frontend/native
               #  and build Node.js binding using NAPI.rs. 
               yarn workspace @affine/native build
-              
+
               # Build Server Dependencies
               yarn workspace @affine/server-native build
+
+              BUILD_TYPE=canary yarn workspace @affine/web build
+              BUILD_TYPE=canary yarn workspace @affine/admin build
+              BUILD_TYPE=canary yarn workspace @affine/mobile build
+              BUILD_TYPE=canary yarn workspace @affine/server build
             '';
-          };          
+          };
+
+          docker = pkgs.mkShell {
+            nativeBuildInputs =
+              bareMinimum
+              ++ (with pkgs; [
+                prisma-engines
+                openssl
+              ]);
+            # shellHook = prisma.shellHook;
+            shellHook = ''
+              export PRISMA_SCHEMA_ENGINE_BINARY="${pkgs.prisma-engines}/bin/schema-engine"
+              export PRISMA_QUERY_ENGINE_BINARY="${pkgs.prisma-engines}/bin/query-engine"
+              export PRISMA_QUERY_ENGINE_LIBRARY="${pkgs.prisma-engines}/lib/libquery_engine.node"
+              export PRISMA_FMT_BINARY="${pkgs.prisma-engines}/bin/prisma-fmt"
+              # export PATH="$PWD/backend/node_modules/.bin/:$PATH"
+              export PATH="$PWD/node_modules/.bin/:$PATH"
+              # Create the necessary directories
+              mkdir -p app/static
+              mkdir -p app/static/admin
+              mkdir -p app/static/mobile
+
+              # Copy backend server files
+              cp -r ./packages/backend/server/. app
+
+              # Copy frontend web app files
+              cp -r ./packages/frontend/apps/web/dist/. app/static
+
+              # Copy frontend admin app files
+              cp -r ./packages/frontend/admin/dist/. app/static/admin
+
+              # Copy frontend mobile app files
+              cp -r ./packages/frontend/apps/mobile/dist/. app/static/mobile
+
+              cd app
+
+              # Run the Node.js application
+              # node --import ./scripts/register.js ./dist/index.js
+              # affine_selfhosted
+              # node ./scripts/self-host-predeploy && node ./dist/index.js 
+            '';
+          };   
 
           ci-format = pkgs.mkShell {
             nativeBuildInputs = with pkgs; [corepack];
