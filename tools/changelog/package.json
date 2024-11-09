@@ -10,7 +10,7 @@
     "@slack/web-api": "^7.3.4",
     "changelogithub": "^0.13.9",
     "jsx-slack": "^6.1.1",
-    "marked": "^14.0.0"
+    "marked": "^15.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.12"

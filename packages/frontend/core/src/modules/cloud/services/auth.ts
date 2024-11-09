@@ -12,6 +12,7 @@ import { distinctUntilChanged, map, skip } from 'rxjs';
 
 import type { UrlService } from '../../url';
 import { type AuthAccountInfo, AuthSession } from '../entities/session';
+import { BackendError } from '../error';
 import type { AuthStore } from '../stores/auth';
 import type { FetchService } from './fetch';
 
@@ -111,7 +112,10 @@ export class AuthService extends Service {
         },
       });
     } catch (e) {
-      track.$.$.auth.signInFail({ method: 'magic-link' });
+      track.$.$.auth.signInFail({
+        method: 'magic-link',
+        reason: e instanceof BackendError ? e.originError.type : 'unknown',
+      });
       throw e;
     }
   }
@@ -129,7 +133,10 @@ export class AuthService extends Service {
       this.session.revalidate();
       track.$.$.auth.signedIn({ method: 'magic-link' });
     } catch (e) {
-      track.$.$.auth.signInFail({ method: 'magic-link' });
+      track.$.$.auth.signInFail({
+        method: 'magic-link',
+        reason: e instanceof BackendError ? e.originError.type : 'unknown',
+      });
       throw e;
     }
   }
@@ -166,7 +173,11 @@ export class AuthService extends Service {
 
       return url;
     } catch (e) {
-      track.$.$.auth.signInFail({ method: 'oauth', provider });
+      track.$.$.auth.signInFail({
+        method: 'oauth',
+        provider,
+        reason: e instanceof BackendError ? e.originError.type : 'unknown',
+      });
       throw e;
     }
   }
@@ -186,7 +197,11 @@ export class AuthService extends Service {
       track.$.$.auth.signedIn({ method: 'oauth', provider });
       return res.json();
     } catch (e) {
-      track.$.$.auth.signInFail({ method: 'oauth', provider });
+      track.$.$.auth.signInFail({
+        method: 'oauth',
+        provider,
+        reason: e instanceof BackendError ? e.originError.type : 'unknown',
+      });
       throw e;
     }
   }
@@ -212,7 +227,10 @@ export class AuthService extends Service {
       this.session.revalidate();
       track.$.$.auth.signedIn({ method: 'password' });
     } catch (e) {
-      track.$.$.auth.signInFail({ method: 'password' });
+      track.$.$.auth.signInFail({
+        method: 'password',
+        reason: e instanceof BackendError ? e.originError.type : 'unknown',
+      });
       throw e;
     }
   }

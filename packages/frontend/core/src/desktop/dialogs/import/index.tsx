@@ -2,11 +2,11 @@ import { Button, IconButton, Modal } from '@affine/component';
 import { useAsyncCallback } from '@affine/core/components/hooks/affine-async-hooks';
 import type {
   DialogComponentProps,
-  GLOBAL_DIALOG_SCHEMA,
+  WORKSPACE_DIALOG_SCHEMA,
 } from '@affine/core/modules/dialogs';
 import { UrlService } from '@affine/core/modules/url';
-import { WorkbenchService } from '@affine/core/modules/workbench';
 import { useI18n } from '@affine/i18n';
+import track from '@affine/track';
 import {
   MarkdownTransformer,
   NotionHtmlTransformer,
@@ -28,13 +28,18 @@ import * as style from './styles.css';
 type ImportType = 'markdown' | 'markdownZip' | 'notion';
 type AcceptType = 'Markdown' | 'Zip';
 type Status = 'idle' | 'importing' | 'success' | 'error';
+type ImportResult = {
+  docIds: string[];
+  entryId?: string;
+  isWorkspaceFile?: boolean;
+};
 
 type ImportConfig = {
   fileOptions: { acceptType: AcceptType; multiple: boolean };
   importFunction: (
     docCollection: DocCollection,
     file: File | File[]
-  ) => Promise<string[]>;
+  ) => Promise<ImportResult>;
 };
 
 const DISCORD_URL = 'https://discord.gg/whd5mjYqVw';
@@ -83,18 +88,20 @@ const importConfigs: Record<ImportType, ImportConfig> = {
       if (!Array.isArray(files)) {
         throw new Error('Expected an array of files for markdown files import');
       }
-      const pageIds: string[] = [];
+      const docIds: string[] = [];
       for (const file of files) {
         const text = await file.text();
         const fileName = file.name.split('.').slice(0, -1).join('.');
-        const pageId = await MarkdownTransformer.importMarkdownToDoc({
+        const docId = await MarkdownTransformer.importMarkdownToDoc({
           collection: docCollection,
           markdown: text,
           fileName,
         });
-        if (pageId) pageIds.push(pageId);
+        if (docId) docIds.push(docId);
       }
-      return pageIds;
+      return {
+        docIds,
+      };
     },
   },
   markdownZip: {
@@ -103,10 +110,13 @@ const importConfigs: Record<ImportType, ImportConfig> = {
       if (Array.isArray(file)) {
         throw new Error('Expected a single zip file for markdownZip import');
       }
-      return MarkdownTransformer.importMarkdownZip({
+      const docIds = await MarkdownTransformer.importMarkdownZip({
         collection: docCollection,
         imported: file,
       });
+      return {
+        docIds,
+      };
     },
   },
   notion: {
@@ -115,11 +125,16 @@ const importConfigs: Record<ImportType, ImportConfig> = {
       if (Array.isArray(file)) {
         throw new Error('Expected a single zip file for notion import');
       }
-      const { pageIds } = await NotionHtmlTransformer.importNotionZip({
-        collection: docCollection,
-        imported: file,
-      });
-      return pageIds;
+      const { entryId, pageIds, isWorkspaceFile } =
+        await NotionHtmlTransformer.importNotionZip({
+          collection: docCollection,
+          imported: file,
+        });
+      return {
+        docIds: pageIds,
+        entryId,
+        isWorkspaceFile,
+      };
     },
   },
 };
@@ -274,13 +289,12 @@ const ErrorStatus = ({
 
 export const ImportDialog = ({
   close,
-}: DialogComponentProps<GLOBAL_DIALOG_SCHEMA['import']>) => {
+}: DialogComponentProps<WORKSPACE_DIALOG_SCHEMA['import']>) => {
   const t = useI18n();
   const [status, setStatus] = useState<Status>('idle');
   const [importError, setImportError] = useState<string | null>(null);
-  const [pageIds, setPageIds] = useState<string[]>([]);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const workspace = useService(WorkspaceService).workspace;
-  const workbench = useService(WorkbenchService).workbench;
   const docCollection = workspace.docCollection;
 
   const handleImport = useAsyncCallback(
@@ -297,29 +311,41 @@ export const ImportDialog = ({
         }
 
         setStatus('importing');
+        track.$.importModal.$.import({
+          type,
+          status: 'importing',
+        });
 
-        const pageIds = await importConfig.importFunction(docCollection, file);
+        const { docIds, entryId, isWorkspaceFile } =
+          await importConfig.importFunction(docCollection, file);
 
-        setPageIds(pageIds);
+        setImportResult({ docIds, entryId, isWorkspaceFile });
         setStatus('success');
+        track.$.importModal.$.import({
+          type,
+          status: 'success',
+          result: {
+            docCount: docIds.length,
+          },
+        });
       } catch (error) {
-        setImportError(
-          error instanceof Error ? error.message : 'Unknown error occurred'
-        );
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error occurred';
+        setImportError(errorMessage);
         setStatus('error');
+        track.$.importModal.$.import({
+          type,
+          status: 'failed',
+          error: errorMessage || undefined,
+        });
       }
     },
     [docCollection, t]
   );
 
   const handleComplete = useCallback(() => {
-    if (pageIds.length > 1) {
-      workbench.openAll();
-    } else if (pageIds.length === 1) {
-      workbench.openDoc(pageIds[0]);
-    }
-    close();
-  }, [pageIds, close, workbench]);
+    close(importResult || undefined);
+  }, [importResult, close]);
 
   const handleRetry = () => {
     setStatus('idle');
@@ -335,8 +361,10 @@ export const ImportDialog = ({
   return (
     <Modal
       open
-      onOpenChange={() => {
-        close();
+      onOpenChange={(open: boolean) => {
+        if (!open) {
+          close(importResult || undefined);
+        }
       }}
       width={480}
       contentOptions={{
@@ -357,7 +385,7 @@ export const ImportDialog = ({
       withoutCloseButton={status === 'importing'}
       persistent={status === 'importing'}
     >
-      <div className={style.importModalContainer}>
+      <div className={style.importModalContainer} data-testid="import-dialog">
         {statusComponents[status]}
       </div>
     </Modal>

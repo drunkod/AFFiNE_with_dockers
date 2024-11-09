@@ -1,17 +1,83 @@
+import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import { DocDisplayMetaService } from '@affine/core/modules/doc-display-meta';
 import { JournalService } from '@affine/core/modules/journal';
 import { I18n } from '@affine/i18n';
 import { track } from '@affine/track';
 import type { EditorHost } from '@blocksuite/affine/block-std';
-import type { AffineInlineEditor } from '@blocksuite/affine/blocks';
+import type {
+  AffineInlineEditor,
+  LinkedWidgetConfig,
+} from '@blocksuite/affine/blocks';
 import { LinkedWidgetUtils } from '@blocksuite/affine/blocks';
 import type { DocMeta } from '@blocksuite/affine/store';
 import { type FrameworkProvider, WorkspaceService } from '@toeverything/infra';
 
+function createNewDocMenuGroup(
+  framework: FrameworkProvider,
+  query: string,
+  abort: () => void,
+  editorHost: EditorHost,
+  inlineEditor: AffineInlineEditor
+) {
+  const originalNewDocMenuGroup = LinkedWidgetUtils.createNewDocMenuGroup(
+    query,
+    abort,
+    editorHost,
+    inlineEditor
+  );
+
+  // Patch the import item, to use the custom import dialog.
+  const importItemIndex = originalNewDocMenuGroup.items.findIndex(
+    item => item.key === 'import'
+  );
+  if (importItemIndex === -1) {
+    return originalNewDocMenuGroup;
+  }
+
+  const originalItems = originalNewDocMenuGroup.items;
+  const originalImportItem = originalItems[importItemIndex];
+  const customImportItem = {
+    ...originalImportItem,
+    action: () => {
+      abort();
+      track.doc.editor.atMenu.import();
+      framework
+        .get(WorkspaceDialogService)
+        .open('import', undefined, payload => {
+          if (!payload) {
+            return;
+          }
+
+          // If the imported file is a workspace file, insert the entry page node.
+          const { docIds, entryId, isWorkspaceFile } = payload;
+          if (isWorkspaceFile && entryId) {
+            LinkedWidgetUtils.insertLinkedNode({
+              inlineEditor,
+              docId: entryId,
+            });
+            return;
+          }
+
+          // Otherwise, insert all the doc nodes.
+          for (const docId of docIds) {
+            LinkedWidgetUtils.insertLinkedNode({
+              inlineEditor,
+              docId,
+            });
+          }
+        });
+    },
+  };
+
+  // only replace the original import item
+  originalItems.splice(importItemIndex, 1, customImportItem);
+  return originalNewDocMenuGroup;
+}
+
 // TODO: fix the type
 export function createLinkedWidgetConfig(
   framework: FrameworkProvider
-): Partial<Record<string, unknown>> {
+): Partial<LinkedWidgetConfig> {
   return {
     getMenus: (
       query: string,
@@ -70,13 +136,25 @@ export function createLinkedWidgetConfig(
           maxDisplay: MAX_DOCS,
           overflowText: `${docMetas.length - MAX_DOCS} more docs`,
         },
-        LinkedWidgetUtils.createNewDocMenuGroup(
+        createNewDocMenuGroup(
+          framework,
           query,
           abort,
           editorHost,
           inlineEditor
         ),
       ]);
+    },
+    mobile: {
+      useScreenHeight: BUILD_CONFIG.isIOS,
+      scrollContainer: window,
+      scrollTopOffset: () => {
+        const header = document.querySelector('header');
+        if (!header) return 0;
+
+        const { y, height } = header.getBoundingClientRect();
+        return y + height;
+      },
     },
   };
 }

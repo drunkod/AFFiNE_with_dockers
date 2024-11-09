@@ -1,3 +1,4 @@
+import { Skeleton } from '@affine/component';
 import {
   AuthService,
   ServerConfigService,
@@ -7,7 +8,7 @@ import {
 import { useLiveData, useService } from '@toeverything/infra';
 import { cssVar } from '@toeverything/theme';
 import { cssVarV2 } from '@toeverything/theme/v2';
-import { useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 
 import { SettingGroup } from '../group';
 import * as styles from './style.css';
@@ -28,11 +29,13 @@ const Progress = ({
   percent,
   desc,
   color,
+  children,
 }: {
-  name: string;
-  percent: number;
-  desc: string;
-  color: string | null;
+  name: ReactNode;
+  desc: ReactNode;
+  percent?: number;
+  color?: string | null;
+  children?: React.ReactNode;
 }) => {
   return (
     <div className={styles.progressRoot}>
@@ -40,16 +43,30 @@ const Progress = ({
         <span className={styles.progressName}>{name}</span>
         <span className={styles.progressDesc}>{desc}</span>
       </div>
-      <div className={styles.progressTrack}>
-        <div
-          className={styles.progressBar}
-          style={{
-            width: `${percent}%`,
-            backgroundColor: color ?? cssVarV2('button/primary'),
-          }}
-        />
-      </div>
+      {children ?? (
+        <div className={styles.progressTrack}>
+          <div
+            className={styles.progressBar}
+            style={{
+              width: `${percent}%`,
+              backgroundColor: color ?? cssVarV2('button/primary'),
+            }}
+          />
+        </div>
+      )}
     </div>
+  );
+};
+
+const skeletonProps = { style: { margin: 0 }, animation: 'wave' } as const;
+const Loading = () => {
+  return (
+    <Progress
+      name={<Skeleton height={22} width="60" {...skeletonProps} />}
+      desc={<Skeleton height={16} width="80" {...skeletonProps} />}
+    >
+      <Skeleton height={10} {...skeletonProps} />
+    </Progress>
   );
 };
 
@@ -82,7 +99,7 @@ const CloudUsage = () => {
 
   const loading = percent === null;
 
-  if (loading) return null;
+  if (loading) return <Loading />;
 
   return (
     <Progress
@@ -110,7 +127,7 @@ const AiUsage = () => {
   }, [copilotQuotaService]);
 
   if (loading || loadError) {
-    return null;
+    return <Loading />;
   }
 
   if (copilotActionLimit === 'unlimited') {

@@ -3,7 +3,7 @@ import { style } from '@vanilla-extract/css';
 
 const basicHeader = style({
   width: '100%',
-  height: 56,
+  height: 44,
 });
 export const header = style({
   width: '100%',
@@ -25,7 +25,7 @@ export const headerContent = style([
 ]);
 
 export const tabs = style({
-  height: 56,
+  height: 44,
   gap: 16,
   display: 'flex',
   alignItems: 'center',

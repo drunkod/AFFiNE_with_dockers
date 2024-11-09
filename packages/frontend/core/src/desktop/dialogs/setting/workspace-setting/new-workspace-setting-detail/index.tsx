@@ -80,7 +80,7 @@ export const WorkspaceSettingDetail = ({
         </SettingWrapper>
       )}
       <SettingWrapper>
-        <DeleteLeaveWorkspace />
+        <DeleteLeaveWorkspace onCloseSetting={onCloseSetting} />
         <SettingRow
           name={
             <span style={{ color: 'var(--affine-text-secondary-color)' }}>

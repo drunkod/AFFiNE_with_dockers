@@ -19,7 +19,7 @@ export const AFFINE_FLAGS = {
     bsFlag: 'enable_database_full_width',
     displayName: 'Database Full Width',
     description: 'The database will be displayed in full-width mode.',
-    configurable: isNotStableBuild,
+    configurable: isCanaryBuild,
   },
   enable_database_attachment_note: {
     category: 'blocksuite',
@@ -33,7 +33,7 @@ export const AFFINE_FLAGS = {
     bsFlag: 'enable_block_query',
     displayName: 'Todo Block Query',
     description: 'Enables querying of todo blocks.',
-    configurable: isNotStableBuild,
+    configurable: isCanaryBuild,
   },
   enable_synced_doc_block: {
     category: 'blocksuite',
@@ -162,11 +162,20 @@ export const AFFINE_FLAGS = {
     configurable: false,
     defaultState: isMobile,
   },
+  enable_mobile_linked_doc_menu: {
+    category: 'blocksuite',
+    bsFlag: 'enable_mobile_linked_doc_menu',
+    displayName: 'Mobile Linked Doc Widget',
+    description: 'Enables the mobile linked doc menu.',
+    configurable: false,
+    defaultState: isMobile,
+  },
   enable_snapshot_import_export: {
     category: 'affine',
     displayName: 'Enable Snapshot Import Export',
     description:
       'Once enabled, users can import and export blocksuite snapshots',
+    hide: true,
     configurable: true,
     defaultState: false,
   },

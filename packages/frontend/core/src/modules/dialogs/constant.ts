@@ -26,7 +26,6 @@ export type GLOBAL_DIALOG_SCHEMA = {
     templateMode: DocMode;
     snapshotUrl: string;
   }) => void;
-  import: () => void;
   setting: (props: {
     activeTab?: SettingTab;
     workspaceMetadata?: WorkspaceMetadata | null;
@@ -52,4 +51,9 @@ export type WORKSPACE_DIALOG_SCHEMA = {
     init: string[];
     onBeforeConfirm?: (ids: string[], cb: () => void) => void;
   }) => string[];
+  import: () => {
+    docIds: string[];
+    entryId?: string;
+    isWorkspaceFile?: boolean;
+  };
 };

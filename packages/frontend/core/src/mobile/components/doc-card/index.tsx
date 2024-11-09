@@ -10,10 +10,17 @@ import {
 import type { DocMeta } from '@blocksuite/affine/store';
 import { useLiveData, useService, WorkspaceService } from '@toeverything/infra';
 import clsx from 'clsx';
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, type ReactNode, useMemo } from 'react';
 
 import * as styles from './styles.css';
 import { DocCardTags } from './tag';
+
+const calcRowsById = (id: string) => {
+  const [MIN, MAX] = [2, 8];
+
+  const code = id.charCodeAt(0);
+  return Math.floor((code % (MAX - MIN)) + MIN);
+};
 
 export interface DocCardProps extends Omit<WorkbenchLinkProps, 'to'> {
   meta: {
@@ -21,10 +28,18 @@ export interface DocCardProps extends Omit<WorkbenchLinkProps, 'to'> {
     title?: ReactNode;
   } & { [key: string]: any };
   showTags?: boolean;
+
+  /**
+   * When enabled, preview's height will be calculated based on `meta.id`
+   */
+  autoHeightById?: boolean;
 }
 
 export const DocCard = forwardRef<HTMLAnchorElement, DocCardProps>(
-  function DocCard({ showTags = true, meta, className, ...attrs }, ref) {
+  function DocCard(
+    { showTags = true, meta, className, autoHeightById, ...attrs },
+    ref
+  ) {
     const favAdapter = useService(CompatibleFavoriteItemsAdapter);
     const workspace = useService(WorkspaceService).workspace;
 
@@ -37,6 +52,12 @@ export const DocCard = forwardRef<HTMLAnchorElement, DocCardProps>(
       },
       [favAdapter, meta.id]
     );
+
+    const contentStyle = useMemo(() => {
+      if (!autoHeightById) return { flex: 1 };
+      const rows = calcRowsById(meta.id);
+      return { height: `${rows * 18}px` };
+    }, [autoHeightById, meta.id]);
 
     return (
       <WorkbenchLink
@@ -57,7 +78,7 @@ export const DocCard = forwardRef<HTMLAnchorElement, DocCardProps>(
             }
           />
         </header>
-        <main className={styles.content}>
+        <main className={styles.content} style={contentStyle}>
           <PagePreview
             docCollection={workspace.docCollection}
             pageId={meta.id}

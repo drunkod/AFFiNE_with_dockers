@@ -273,7 +273,7 @@ const PageEvents = {
   doc: {
     editor: {
       slashMenu: ['linkDoc', 'createDoc', 'bookmark'],
-      atMenu: ['linkDoc'],
+      atMenu: ['linkDoc', 'import'],
       quickSearch: ['createDoc'],
       formatToolbar: ['bold'],
       pageRef: ['navigate'],
@@ -382,7 +382,7 @@ export type EventArgs = {
   createWorkspace: { flavour: string };
   signIn: AuthArgs;
   signedIn: AuthArgs;
-  signInFail: AuthArgs;
+  signInFail: AuthArgs & { reason: string };
   viewPlans: PaymentEventArgs;
   checkout: PaymentEventArgs;
   subscribe: PaymentEventArgs;

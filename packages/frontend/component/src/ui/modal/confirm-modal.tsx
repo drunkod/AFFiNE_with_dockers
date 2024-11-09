@@ -40,6 +40,7 @@ export const ConfirmModal = ({
   autoFocusConfirm = true,
   headerClassName,
   descriptionClassName,
+  contentOptions,
   ...props
 }: ConfirmModalProps) => {
   const onConfirmClick = useCallback(() => {
@@ -50,7 +51,8 @@ export const ConfirmModal = ({
   return (
     <Modal
       contentOptions={{
-        className: styles.container,
+        ...contentOptions,
+        className: clsx(styles.container, contentOptions?.className),
         onPointerDownOutside: e => {
           e.stopPropagation();
           onCancel?.();

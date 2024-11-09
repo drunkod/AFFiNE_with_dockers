@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { map, pairwise } from 'rxjs';
 
 import {
+  editorWrapper,
   snapshotContainer,
   snapshotLabel,
   snapshotSkeleton,
@@ -59,9 +60,11 @@ export const EdgelessSnapshot = (props: Props) => {
     ) as EdgelessRootService;
     const elements = getElements(doc);
     const props = editorSetting.get(keyName) as any;
+    doc.awarenessStore.setReadonly(doc.blockCollection, false);
     elements.forEach(element => {
       edgelessService.updateElement(element.id, props);
     });
+    doc.awarenessStore.setReadonly(doc.blockCollection, true);
   }, [editorSetting, getElements, keyName]);
 
   const renderEditor = useCallback(async () => {
@@ -74,6 +77,7 @@ export const EdgelessSnapshot = (props: Props) => {
       extensions: SpecProvider.getInstance().getSpec('edgeless:preview').value,
     }).render();
     docRef.current = doc;
+    editorHostRef.current?.remove();
     editorHostRef.current = editorHost;
 
     if (firstUpdate) {
@@ -88,6 +92,7 @@ export const EdgelessSnapshot = (props: Props) => {
     ) as EdgelessRootService;
     edgelessService.specSlots.viewConnected.once(({ component }) => {
       const edgelessBlock = component as any;
+      doc.awarenessStore.setReadonly(doc.blockCollection, false);
       edgelessBlock.editorViewportSelector = 'ref-viewport';
       const frame = getFrameBlock(doc);
       if (frame) {
@@ -96,6 +101,7 @@ export const EdgelessSnapshot = (props: Props) => {
       }
       const bound = boundMap.get(docName);
       bound && edgelessService.viewport.setViewportByBound(bound);
+      doc.awarenessStore.setReadonly(doc.blockCollection, true);
     });
 
     // append to dom node
@@ -133,16 +139,7 @@ export const EdgelessSnapshot = (props: Props) => {
     <div className={snapshotContainer}>
       <div className={snapshotTitle}>{title}</div>
       <div className={snapshotLabel}>{title}</div>
-      <div
-        ref={wrapperRef}
-        style={{
-          position: 'relative',
-          pointerEvents: 'none',
-          userSelect: 'none',
-          overflow: 'hidden',
-          height,
-        }}
-      >
+      <div ref={wrapperRef} className={editorWrapper} style={{ height }}>
         <Skeleton
           className={snapshotSkeleton}
           variant="rounded"
