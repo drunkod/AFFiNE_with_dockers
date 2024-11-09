@@ -355,6 +355,7 @@ export const ShapeSettings = () => {
       ) as EdgelessRootService;
       const surface = getSurfaceBlock(doc);
       if (!surface) return;
+      doc.awarenessStore.setReadonly(doc.blockCollection, false);
       surface.getElementsByType('shape').forEach(node => {
         const shape = node as ShapeElementModel;
         const { shapeType, radius } = shape;
@@ -362,6 +363,7 @@ export const ShapeSettings = () => {
         const props = editorSetting.get(`shape:${shapeName}`);
         edgelessService.updateElement(shape.id, props);
       });
+      doc.awarenessStore.setReadonly(doc.blockCollection, true);
     },
     [editorSetting]
   );

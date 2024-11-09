@@ -1,3 +1,4 @@
+import { bodyEmphasized, bodyRegular } from '@toeverything/theme/typography';
 import { style } from '@vanilla-extract/css';
 
 // desktop
@@ -41,28 +42,25 @@ export const mobileStyles = {
     padding: '12px 0 !important',
     borderRadius: 22,
   }),
-  description: style({
-    padding: '11px 22px',
-    fontSize: 17,
-    fontWeight: 400,
-    letterSpacing: -0.43,
-    lineHeight: '22px',
-  }),
-  header: style({
-    padding: '10px 16px',
-    marginBottom: '0px !important',
-    fontSize: 17,
-    fontWeight: 600,
-    letterSpacing: -0.43,
-    lineHeight: '22px',
-  }),
-  content: style({
-    padding: '11px 22px',
-    fontSize: 17,
-    fontWeight: 400,
-    letterSpacing: -0.43,
-    lineHeight: '22px',
-  }),
+  description: style([
+    bodyRegular,
+    {
+      padding: '11px 22px',
+    },
+  ]),
+  header: style([
+    bodyEmphasized,
+    {
+      padding: '10px 16px',
+      marginBottom: '0px !important',
+    },
+  ]),
+  content: style([
+    bodyRegular,
+    {
+      padding: '11px 22px',
+    },
+  ]),
   footer: style({
     padding: '8px 16px',
     display: 'flex',
@@ -74,13 +72,14 @@ export const mobileStyles = {
       },
     },
   }),
-  action: style({
-    width: '100%',
-    height: 44,
-    borderRadius: 8,
-    fontSize: 17,
-    fontWeight: 400,
-    letterSpacing: -0.43,
-    lineHeight: '22px',
-  }),
+  action: style([
+    bodyRegular,
+    {
+      width: '100%',
+      height: 44,
+      borderRadius: 8,
+      fontSize: 17,
+      fontWeight: 400,
+    },
+  ]),
 };

@@ -1,5 +1,6 @@
-import { Modal } from '@affine/component';
+import { IconButton, Modal, SafeArea } from '@affine/component';
 import { authAtom } from '@affine/core/components/atoms';
+import { CloseIcon } from '@blocksuite/icons/rc';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { useAtom } from 'jotai';
 import { useCallback } from 'react';
@@ -35,6 +36,19 @@ export const MobileSignInModal = () => {
       withoutCloseButton
     >
       <MobileSignIn onSkip={closeModal} />
+      <SafeArea
+        top
+        style={{ position: 'absolute', top: 0, right: 0, paddingRight: 16 }}
+        topOffset={8}
+      >
+        <IconButton
+          size="24"
+          variant="solid"
+          icon={<CloseIcon />}
+          style={{ borderRadius: 8, padding: 4 }}
+          onClick={closeModal}
+        />
+      </SafeArea>
     </Modal>
   );
 };

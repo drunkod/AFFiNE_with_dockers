@@ -126,7 +126,7 @@ export class OpenAIProvider
     });
   }
 
-  protected checkParams({
+  protected async checkParams({
     messages,
     embeddings,
     model,
@@ -137,7 +137,7 @@ export class OpenAIProvider
     model: string;
     options: CopilotChatOptions;
   }) {
-    if (!this.availableModels.includes(model)) {
+    if (!(await this.isModelAvailable(model))) {
       throw new CopilotPromptInvalid(`Invalid model: ${model}`);
     }
     if (Array.isArray(messages) && messages.length > 0) {
@@ -219,7 +219,7 @@ export class OpenAIProvider
     model: string = 'gpt-4o-mini',
     options: CopilotChatOptions = {}
   ): Promise<string> {
-    this.checkParams({ messages, model, options });
+    await this.checkParams({ messages, model, options });
 
     try {
       metrics.ai.counter('chat_text_calls').add(1, { model });
@@ -250,7 +250,7 @@ export class OpenAIProvider
     model: string = 'gpt-4o-mini',
     options: CopilotChatOptions = {}
   ): AsyncIterable<string> {
-    this.checkParams({ messages, model, options });
+    await this.checkParams({ messages, model, options });
 
     try {
       metrics.ai.counter('chat_text_stream_calls').add(1, { model });
@@ -300,7 +300,7 @@ export class OpenAIProvider
     options: CopilotEmbeddingOptions = { dimensions: DEFAULT_DIMENSIONS }
   ): Promise<number[][]> {
     messages = Array.isArray(messages) ? messages : [messages];
-    this.checkParams({ embeddings: messages, model, options });
+    await this.checkParams({ embeddings: messages, model, options });
 
     try {
       metrics.ai.counter('generate_embedding_calls').add(1, { model });

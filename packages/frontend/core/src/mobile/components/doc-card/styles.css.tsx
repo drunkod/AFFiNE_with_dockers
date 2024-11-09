@@ -43,7 +43,6 @@ export const untitled = style({
 export const content = style([
   footnoteRegular,
   {
-    flex: 1,
     overflow: 'hidden',
   },
 ]);

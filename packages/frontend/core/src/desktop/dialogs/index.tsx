@@ -24,7 +24,6 @@ const GLOBAL_DIALOGS = {
   'import-workspace': ImportWorkspaceDialog,
   'import-template': ImportTemplateDialog,
   setting: SettingDialog,
-  import: ImportDialog,
 } satisfies {
   [key in keyof GLOBAL_DIALOG_SCHEMA]?: React.FC<
     DialogComponentProps<GLOBAL_DIALOG_SCHEMA[key]>
@@ -37,6 +36,7 @@ const WORKSPACE_DIALOGS = {
   'tag-selector': TagSelectorDialog,
   'doc-selector': DocSelectorDialog,
   'collection-selector': CollectionSelectorDialog,
+  import: ImportDialog,
 } satisfies {
   [key in keyof WORKSPACE_DIALOG_SCHEMA]?: React.FC<
     DialogComponentProps<WORKSPACE_DIALOG_SCHEMA[key]>

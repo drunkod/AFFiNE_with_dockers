@@ -1,10 +1,19 @@
+import { useGlobalEvent } from '@affine/core/mobile/hooks/use-global-events';
 import type { DocMeta } from '@blocksuite/affine/store';
-import { useMemo } from 'react';
+import { useCallback, useState } from 'react';
 
 import { DocCard } from '../../../components';
 import * as styles from './masonry.css';
 
-// TODO(@CatsJuice): Large amount docs performance
+const calcColumnCount = () => {
+  const maxCardWidth = 220;
+  const windowWidth = window.innerWidth;
+  const newColumnCount = Math.floor(
+    (windowWidth - styles.paddingX * 2 - styles.columnGap) / maxCardWidth
+  );
+  return Math.max(newColumnCount, 2);
+};
+
 export const MasonryDocs = ({
   items,
   showTags,
@@ -12,25 +21,23 @@ export const MasonryDocs = ({
   items: DocMeta[];
   showTags?: boolean;
 }) => {
-  // card preview is loaded lazily, it's meaningless to calculate height
-  const stacks = useMemo(() => {
-    return items.reduce(
-      (acc, item, i) => {
-        acc[i % 2].push(item);
-        return acc;
-      },
-      [[], []] as [DocMeta[], DocMeta[]]
-    );
-  }, [items]);
+  const [columnCount, setColumnCount] = useState(calcColumnCount);
+
+  const updateColumnCount = useCallback(() => {
+    setColumnCount(calcColumnCount());
+  }, []);
+  useGlobalEvent('resize', updateColumnCount);
 
   return (
-    <div className={styles.stacks}>
-      {stacks.map((stack, i) => (
-        <ul key={i} className={styles.stack}>
-          {stack.map(item => (
-            <DocCard showTags={showTags} key={item.id} meta={item} />
-          ))}
-        </ul>
+    <div className={styles.masonry} style={{ columnCount }}>
+      {items.map(item => (
+        <DocCard
+          key={item.id}
+          className={styles.masonryItem}
+          showTags={showTags}
+          meta={item}
+          autoHeightById
+        />
       ))}
     </div>
   );

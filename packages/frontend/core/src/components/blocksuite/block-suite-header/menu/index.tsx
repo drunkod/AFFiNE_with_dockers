@@ -18,10 +18,7 @@ import {
 } from '@affine/core/components/page-list';
 import { IsFavoriteIcon } from '@affine/core/components/pure/icons';
 import { useDetailPageHeaderResponsive } from '@affine/core/desktop/pages/workspace/detail-page/use-header-responsive';
-import {
-  GlobalDialogService,
-  WorkspaceDialogService,
-} from '@affine/core/modules/dialogs';
+import { WorkspaceDialogService } from '@affine/core/modules/dialogs';
 import { EditorService } from '@affine/core/modules/editor';
 import { OpenInAppService } from '@affine/core/modules/open-in-app/services';
 import { WorkbenchService } from '@affine/core/modules/workbench';
@@ -79,7 +76,6 @@ export const PageHeaderMenuButton = ({
 
   const workspace = useService(WorkspaceService).workspace;
 
-  const globalDialogService = useService(GlobalDialogService);
   const editorService = useService(EditorService);
   const isInTrash = useLiveData(
     editorService.editor.doc.meta$.map(meta => meta.trash)
@@ -204,10 +200,39 @@ export const PageHeaderMenuButton = ({
     });
   }, [duplicate, pageId]);
 
+  const handleOpenDocs = useCallback(
+    (result: {
+      docIds: string[];
+      entryId?: string;
+      isWorkspaceFile?: boolean;
+    }) => {
+      const { docIds, entryId, isWorkspaceFile } = result;
+      // If the imported file is a workspace file, open the entry page.
+      if (isWorkspaceFile && entryId) {
+        workbench.openDoc(entryId);
+      } else if (!docIds.length) {
+        return;
+      }
+      // Open all the docs when there are multiple docs imported.
+      if (docIds.length > 1) {
+        workbench.openAll();
+      } else {
+        // Otherwise, open the only doc.
+        workbench.openDoc(docIds[0]);
+      }
+    },
+    [workbench]
+  );
+
   const handleOpenImportModal = useCallback(() => {
     track.$.header.importModal.open();
-    globalDialogService.open('import', undefined);
-  }, [globalDialogService]);
+    workspaceDialogService.open('import', undefined, payload => {
+      if (!payload) {
+        return;
+      }
+      handleOpenDocs(payload);
+    });
+  }, [workspaceDialogService, handleOpenDocs]);
 
   const handleShareMenuOpenChange = useCallback((open: boolean) => {
     if (open) {

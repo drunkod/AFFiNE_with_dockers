@@ -76,6 +76,13 @@ export const snapshotLabel = style({
   height: '24px',
 });
 
+export const editorWrapper = style({
+  position: 'relative',
+  pointerEvents: 'none',
+  userSelect: 'none',
+  overflow: 'hidden',
+});
+
 export const shapeIndicator = style({
   boxShadow: 'none',
   backgroundColor: cssVarV2('layer/background/tertiary'),

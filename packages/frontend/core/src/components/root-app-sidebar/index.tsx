@@ -11,7 +11,10 @@ import {
   SidebarScrollableContainer,
 } from '@affine/core/modules/app-sidebar/views';
 import { ExternalMenuLinkItem } from '@affine/core/modules/app-sidebar/views/menu-item/external-menu-link-item';
-import { GlobalDialogService } from '@affine/core/modules/dialogs';
+import {
+  GlobalDialogService,
+  WorkspaceDialogService,
+} from '@affine/core/modules/dialogs';
 import {
   ExplorerCollections,
   ExplorerFavorites,
@@ -84,6 +87,7 @@ export const RootAppSidebar = (): ReactElement => {
   const currentWorkspace = workspaceService.workspace;
   const t = useI18n();
   const globalDialogService = useService(GlobalDialogService);
+  const workspaceDialogService = useService(WorkspaceDialogService);
   const workbench = workbenchService.workbench;
   const currentPath = useLiveData(
     workbench.location$.map(location => location.pathname)
@@ -111,10 +115,39 @@ export const RootAppSidebar = (): ReactElement => {
     track.$.navigationPanel.$.openSettings();
   }, [globalDialogService]);
 
+  const handleOpenDocs = useCallback(
+    (result: {
+      docIds: string[];
+      entryId?: string;
+      isWorkspaceFile?: boolean;
+    }) => {
+      const { docIds, entryId, isWorkspaceFile } = result;
+      // If the imported file is a workspace file, open the entry page.
+      if (isWorkspaceFile && entryId) {
+        workbench.openDoc(entryId);
+      } else if (!docIds.length) {
+        return;
+      }
+      // Open all the docs when there are multiple docs imported.
+      if (docIds.length > 1) {
+        workbench.openAll();
+      } else {
+        // Otherwise, open the only doc.
+        workbench.openDoc(docIds[0]);
+      }
+    },
+    [workbench]
+  );
+
   const onOpenImportModal = useCallback(() => {
     track.$.navigationPanel.importModal.open();
-    globalDialogService.open('import', undefined);
-  }, [globalDialogService]);
+    workspaceDialogService.open('import', undefined, payload => {
+      if (!payload) {
+        return;
+      }
+      handleOpenDocs(payload);
+    });
+  }, [workspaceDialogService, handleOpenDocs]);
 
   return (
     <AppSidebar>

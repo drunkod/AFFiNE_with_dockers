@@ -35,8 +35,6 @@ export interface AuthSessionAuthenticated {
 }
 
 export class AuthSession extends Entity {
-  id = 'affine-cloud' as const;
-
   session$: LiveData<AuthSessionUnauthenticated | AuthSessionAuthenticated> =
     LiveData.from(this.store.watchCachedAuthSession(), null).map(session =>
       session

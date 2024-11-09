@@ -1,5 +1,5 @@
 import { cssVar } from '@toeverything/theme';
-import { title3Regular } from '@toeverything/theme/typography';
+import { headlineRegular } from '@toeverything/theme/typography';
 import { cssVarV2 } from '@toeverything/theme/v2';
 import { style } from '@vanilla-extract/css';
 
@@ -21,7 +21,7 @@ export const triggerRoot = style({
   borderRadius: 4,
 });
 export const triggerLabel = style([
-  title3Regular,
+  headlineRegular,
   {
     flexGrow: '0',
     display: 'flex',
